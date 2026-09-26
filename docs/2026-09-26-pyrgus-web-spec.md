@@ -1,12 +1,11 @@
 # Pyrgus Web — Password & Key Generator Website — Design
 
 **Date:** 2026-09-26
-**Status:** Approved 2026-09-26; revised the same day against the generated Vite project
-(see "Build configuration") — revision awaiting review
+**Status:** Approved 2026-09-26. Implementation plan: `docs/2026-09-26-pyrgus-web-plan.md`.
 **Repo:** `mssio/pyrgus-web` (new, public)
 **Domain:** `p.mss.io` (moved from the 2.0 Vercel project at cutover)
-**Location:** `pyrgus-web/plan/` — gitignored ("AI Planning"), so this spec is not committed.
-**Companion spec:** `apple/xcode/docs/2026-09-26-pyrgus-apple-design.md`
+**Location:** `docs/2026-09-26-pyrgus-web-spec.md` (committed).
+**Companion spec:** `2026-09-26-pyrgus-apple-design.md`, in the separate native app repo
 (native iOS/iPadOS/macOS app and widget). This document is self-contained; it does not depend on the
 native spec.
 
@@ -159,8 +158,9 @@ export const secureRandom: SecureRandom             // module-level default inst
   `SecureRandom` throws. There is **no** `Math.random` fallback. The UI catches this and shows an
   error state with no password. ESLint forbids `Math.random` everywhere (`no-restricted-properties`),
   and CI fails on lint errors.
-- **Testability.** Tests inject a seeded `RandomSource`. The seeded implementation lives only in test
-  files, never in `src/`.
+- **Testability.** Tests inject a seeded `RandomSource`. The seeded implementation and the
+  chi-squared helpers live in `test-support/` at the repo root, never in `src/`, so they cannot reach
+  the bundle.
 - **Memory hygiene — stated limitation.** JavaScript strings are immutable and garbage-collected;
   a generated secret cannot be reliably wiped from memory. The buffer is overwritten on each refill.
   No further measures are attempted.
@@ -234,7 +234,8 @@ Secret 128 / 256 show `128` / `256`; Strong, being approximate, shows `~149` (ro
 ### Wordlist
 
 The EFF long wordlist (7,776 words, CC BY 3.0 US), converted from EFF's `.txt` into a checked-in
-TypeScript module and **bundled in the main chunk** (~22 KB gzipped). Lazy loading was rejected: it
+TypeScript module and **bundled in the main chunk** (~22 KB gzipped). Four entries contain a hyphen
+(`drop-down`, `felt-tip`, `t-shirt`, `yo-yo`); they are kept, as in the original list. Lazy loading was rejected: it
 would make `generate()` async and add a loading state for Memorable. A test verifies the SHA-256 of
 the source list against EFF's published file.
 
@@ -295,11 +296,16 @@ One hook owns `format`, `pinLength`, `password`, `copied` and `error`, and expos
   is closed or unfocused, or where `readText()` is blocked (expected in Safari). The caption's
   "while this tab is open" wording reflects this.
 - Each new copy cancels the previous pending clear.
+- If `writeText` fails (permission denied, unsupported browser), the button does **not** show
+  "Copied"; the caption is replaced by "Couldn't copy. Select the password and copy it manually." The
+  visible value is `select-all`, so one click selects it.
 
 ### Accessibility
 
-- The secret has an `aria-label` spelling it character by character, announcing case and separators
-  ("k, h, d, u, v, n, dash, x, e, capital R, …").
+- The secret is spelled out character by character, announcing case and separators
+  ("k, h, d, u, v, n, dash, x, e, capital R, …"), in an `sr-only` element next to the visible value;
+  the visible value is `aria-hidden`. (`aria-label` is not permitted on a paragraph, and a hidden
+  sibling keeps the spelled text out of a manual text selection.)
 - A polite live region announces "Copied" and "New password generated".
 - Full keyboard operation with visible focus rings. WCAG AA contrast in both themes.
 
@@ -354,7 +360,7 @@ so Pyrgus won't generate a password." Copy and Regenerate are disabled.
 ```
 Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self';
   img-src 'self'; manifest-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none';
-  frame-ancestors 'none'; require-trusted-types-for 'script'; upgrade-insecure-requests
+  frame-ancestors 'none'; require-trusted-types-for 'script'
 Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
 X-Content-Type-Options: nosniff
 Referrer-Policy: no-referrer
@@ -365,7 +371,10 @@ Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   clipboard-read=(self), clipboard-write=(self)
 ```
 
-(`clipboard-read=(self)` is required by the conditional clear.)
+(`clipboard-read=(self)` is required by the conditional clear. `upgrade-insecure-requests` is
+deliberately omitted: every resource is same-origin and HSTS already forces HTTPS, while the directive
+would upgrade `http://localhost` requests and break `vite preview` — which must send exactly the
+production headers.)
 
 **Consequences the build must respect:**
 
@@ -387,7 +396,7 @@ Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   CI, Dependabot enabled.
 - Catalyst components are copied in individually, not wholesale. `motion` is **not** a dependency:
   in Catalyst only `navbar` and `sidebar` import it, and neither is used.
-- **Licensing.** The full Catalyst and Pocket downloads stay in the gitignored `plan/` directory and
+- **Licensing.** The full Catalyst and Pocket downloads stay in the gitignored `tmp/` directory and
   are never committed. Only the components actually used, as part of this end product, enter the
   public repo, which the Tailwind Plus licence permits for open-source end products. The repo must
   not grow into a reusable component collection.
@@ -415,7 +424,7 @@ policy is enforced in `vite preview`, CI and production only.
 
 - `no-restricted-properties`: `Math.random`.
 - `no-restricted-syntax`: the `dangerouslySetInnerHTML` JSX attribute.
-- `globalIgnores`: add `plan`, so the downloaded kits are never linted.
+- `globalIgnores`: add `tmp`, so the downloaded kits are never linted.
 
 **`tsconfig.app.json`** — add `resolveJsonModule: true` (for `test-vectors.json`). Tests import
 `describe`/`it`/`expect` from `vitest` explicitly, so no global test types are added. A new `tsconfig.e2e.json` (Node types, covers `e2e/`
@@ -437,22 +446,110 @@ test:e2e   playwright test
 the `<noscript>` message. The generated `/favicon.svg` link is kept, pointing at the Pyrgus mark.
 
 **Boilerplate removed:** `src/App.css`, `src/assets/{hero.png,react.svg,vite.svg}`,
-`public/icons.svg`, the Vite favicon, and the generated `README.md` content (rewritten to describe
-Pyrgus Web, how to run it, and the security model in brief).
+`public/icons.svg`, the Vite favicon, and the generated `README.md` content (replaced; see
+Repository documentation).
+
+## Repository documentation
+
+Three files at the repo root. `AGENTS.md` is the single source of rules for any coding agent;
+`CLAUDE.md` exists only so Claude Code loads it.
+
+### `AGENTS.md` — written first
+
+Created in the **first** implementation task, so every later task — human, Claude, or subagent —
+works under its rules. Kept short (one screen or two) and imperative. Contents:
+
+1. **What this is** — one paragraph: Pyrgus Web, a static browser-only password generator; the spec
+   at `docs/2026-09-26-pyrgus-web-spec.md` is the source of truth, and design changes update the spec
+   in the same change.
+2. **Commands** — `npm ci`, `dev`, `build`, `preview`, `lint`, `format`, `test`, `test:e2e`, and
+   "before claiming done: `lint`, `build`, `test`, `test:e2e` all pass".
+3. **Layout** — a short map: `src/core/` (framework-free generator), `src/components/`,
+   `src/components/catalyst/`, `src/hooks/`, `src/lib/`, `e2e/`, `docs/`, `tmp/`.
+4. **Security rules (non-negotiable)** — each with a one-line reason:
+   - All randomness goes through `src/core/random.ts`. Never `Math.random`; never `x % n` without
+     rejection sampling.
+   - No network access: no `fetch`, no third-party scripts, fonts, analytics or CDNs.
+   - Never loosen `vercel.json` headers or CSP to make something work; fix the code instead. The
+     header config test guards this.
+   - No `dangerouslySetInnerHTML`, no inline scripts, no `data:` URIs.
+   - Never persist, log or `console.*` a generated secret. Only `format` and `pinLength` go to
+     `localStorage`.
+   - Fail closed: on randomness errors show the error state, never a fallback value.
+5. **Dependencies** — exact pins only; ask before adding any runtime dependency; the allowed runtime
+   set is `react`, `react-dom`, `@headlessui/react`, `clsx`.
+6. **Tailwind Plus** — the downloads live in gitignored `tmp/` and are never committed or copied
+   wholesale. Copy a single component into `src/components/catalyst/` only when it is used, and
+   list any Tailwind Plus-derived file outside that folder in the `LICENSE` exclusion notice.
+7. **Code conventions** — `src/core/` imports no React or DOM APIs other than `crypto`; formats are
+   data in `formats.ts`, not branches; React Compiler is on, so no manual `useMemo`/`useCallback`;
+   `erasableSyntaxOnly` (no `enum`, `namespace`, parameter properties); tests colocated as
+   `*.test.ts(x)` and importing from `vitest`; core changes are test-first.
+8. **Cross-platform parity** — `src/core/test-vectors.json` mirrors the native app. Changing
+   alphabets, formats, entropy or the wordlist means updating the vectors and flagging that the
+   native repo needs the same change. Agents do not edit the native repo.
+9. **Scope** — work only inside this repository.
+
+### `CLAUDE.md`
+
+A single line: `@AGENTS.md`.
+
+### `README.md` — written last
+
+Written in the **final** implementation task, when every command and claim in it is true. For humans
+evaluating or contributing to the project. Contents:
+
+1. **Title and one-line pitch** — "Pyrgus — strong passwords and secret keys, generated in your
+   browser." Link to `https://p.mss.io`.
+2. **How it keeps your secret safe** — short, checkable claims, each pointing at the code or config
+   that proves it: generated with `crypto.getRandomValues` (`src/core/random.ts`); unbiased selection
+   by rejection sampling; the page cannot make network requests (`connect-src 'none'` in
+   `vercel.json`); no analytics or third-party scripts; nothing stored except the format preference.
+   Plus the stated limitations: clipboard clearing depends on the browser; JS strings cannot be wiped
+   from memory; a compromised browser or extension is out of scope.
+3. **Formats** — the six-format table with entropy, and one line on the Standard exclusions.
+4. **Development** — prerequisites (Node 24 LTS, from `.nvmrc`), `npm ci`, the scripts, and
+   the note that the CSP is enforced in `preview`, not `dev`.
+5. **Testing** — what the unit, component and Playwright suites cover, in a few lines.
+6. **Deployment** — Vercel; headers and redirects in `vercel.json`.
+7. **Pyrgus for iPhone, iPad & Mac** — one line: coming soon.
+8. **Credits and licences** — this repo's own code is MIT; Tailwind Plus-derived files
+   (`src/components/catalyst/`, the Pocket-derived phone frame) are under the Tailwind Plus licence
+   and are excluded from the repo licence; EFF long wordlist (CC BY 3.0 US); Inter and JetBrains Mono
+   (SIL OFL 1.1).
+
+### `LICENSE`
+
+The standard MIT licence text, copyright "2026 mss.io", followed by an exclusion notice:
+
+> Files in `src/components/catalyst/` and `src/components/PhoneMockup.tsx` /
+> `src/assets/phone-frame.svg` are derived from Tailwind Plus and are licensed under the Tailwind Plus
+> licence (https://tailwindcss.com/plus/license), not under the MIT licence above. They may not be
+> redistributed separately from this project.
+
+Created alongside `AGENTS.md` in the first task, so the licence position is clear from the first
+public commit. `AGENTS.md` rule 6 adds: any new Tailwind Plus-derived file must be added to this
+exclusion list.
 
 ## Project structure
 
 ```
 pyrgus-web/
-├── plan/                    gitignored: specs, Catalyst and Pocket downloads
-├── public/                  favicon.svg, apple-touch-icon.png, og.png, 404.html
+├── docs/                    this spec (and, later, the implementation plan)
+├── tmp/                     gitignored: Catalyst and Pocket downloads
+├── design/                  og.html, apple-touch-icon.html (sources rendered to PNG by Playwright)
+├── public/                  favicon.svg, apple-touch-icon.png, og.png, 404.html, 404.css
+├── test-support/            seeded RandomSource, chi-squared helpers, Vitest setup
 ├── src/
 │   ├── assets/
 │   │   ├── fonts/           Inter + JetBrains Mono woff2
 │   │   └── phone-frame.svg  from Pocket
 │   ├── core/                generator core, test-vectors.json, *.test.ts
+│   ├── config.ts            outbound URLs (repo, EFF)
 │   ├── components/
 │   │   ├── catalyst/        button, dropdown, link, text, badge (TypeScript variant)
+│   │   ├── icons.tsx        chevron, check, GitHub mark
+│   │   ├── Logo.tsx         the butterfly mark
 │   │   ├── GeneratorCard.tsx
 │   │   ├── FormatPicker.tsx
 │   │   ├── PinLengthControl.tsx
@@ -464,6 +561,8 @@ pyrgus-web/
 │   │   └── Footer.tsx
 │   ├── hooks/usePyrgus.ts
 │   ├── lib/clipboard.ts     copy + conditional 90 s clear
+│   ├── lib/preferences.ts   validated localStorage for format and pinLength
+│   ├── lib/spell.ts         character-by-character spoken form
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── index.css
@@ -474,13 +573,18 @@ pyrgus-web/
 ├── eslint.config.js
 ├── playwright.config.ts
 ├── tsconfig.json, tsconfig.app.json, tsconfig.node.json, tsconfig.e2e.json
+├── AGENTS.md                rules for coding agents (written first)
+├── CLAUDE.md                "@AGENTS.md"
+├── README.md                human-facing overview (written last)
+├── LICENSE                  MIT, © 2026 mss.io, with the Tailwind Plus exclusion (below)
+├── .nvmrc                   24 (matches @types/node 24; CI uses it via setup-node)
 ├── .npmrc                   save-exact=true
 ├── .prettierrc              prettier-plugin-tailwindcss
 └── .github/workflows/ci.yml, dependabot.yml
-
-Tests are colocated with the code they test (`*.test.ts` / `*.test.tsx`). Catalyst's `link.tsx` is
-kept as a plain `<a>`: there is no client-side router.
 ```
+
+Tests are colocated with the code they test (`*.test.ts` / `*.test.tsx`); Playwright specs are
+`e2e/*.spec.ts`. Catalyst's `link.tsx` is kept as a plain `<a>`: there is no client-side router.
 
 ## Testing
 
@@ -492,17 +596,17 @@ kept as a plain `<a>`: there is no client-side router.
 - **Exclusions:** Standard never emits `l O I 0 1`.
 - **Hex:** 32 / 64 characters from `0-9a-f` only, no separators, no uppercase.
 - **Determinism:** a seeded source produces identical output across runs.
-- **Uniformity (chi-squared, ~100,000 samples):** Standard uppercase and digit positions are flat;
-  hex nibble frequencies are flat; PIN digits are flat per position; `randomInt` is flat for
-  n = 3, 100 and 7776. The Standard position test fails against 2.0's algorithm.
+- **Uniformity (chi-squared, ~100,000 samples):** Standard uppercase and digit positions are flat,
+  and so is the **offset between them** (digit position − uppercase position, mod 18); hex nibble
+  frequencies are flat; PIN digits are flat per position; `randomInt` is flat for n = 3, 100 and
+  7776. 2.0's collision rule leaves each position's marginal frequency uniform, so only the offset
+  test detects it — a test runs 2.0's algorithm and asserts the offset test rejects it.
 - **Rejection sampling:** an injected source emitting values in the rejection zone proves they are
   redrawn, not reduced.
 - **Fail-closed:** with `crypto` missing or `getRandomValues` throwing, `SecureRandom` throws.
 - **Wordlist:** exactly 7,776 entries, unique, lowercase ASCII; SHA-256 matches EFF's file.
 - **Entropy:** values match the formulas and `src/core/test-vectors.json`.
 - **Header config:** parses `vercel.json` and asserts every directive listed under Hosting.
-- **Build output:** after `vite build`, `dist/index.html` contains no inline `<script>` body, and no
-  file in `dist/` references a `data:` URI for images or fonts.
 
 ### Component tests (Vitest + jsdom + Testing Library)
 
@@ -522,6 +626,9 @@ production share one source:
   console.
 - At a 320 px viewport with Secret 256 selected, the secret wraps with no horizontal overflow and no
   truncation.
+- **Build output:** `dist/index.html` contains no inline `<script>` and no `style` attribute, and no
+  file in `dist/` references a `data:` URI. (Runs in Playwright because its web server always builds
+  first.)
 
 Redirect behavior (`/generate` → `/`) is verified against the Vercel preview deploy, since only
 Vercel applies `vercel.json` redirects.
@@ -529,8 +636,7 @@ Vercel applies `vercel.json` redirects.
 ### CI (GitHub Actions)
 
 On pull requests and pushes to `main`: `npm ci` → `npm run lint` → `npm run build` (which runs
-`tsc -b`) → `npm test` → `npm run test:e2e`. Unit tests run after the build so the build-output test
-has `dist/` to inspect.
+`tsc -b`) → `npm test` → `npm run test:e2e`.
 
 ### Manual launch checks
 
@@ -551,7 +657,7 @@ has `dist/` to inspect.
 ## Native parity follow-up
 
 The PIN length option (4 / 6 / 8, default 6) was introduced with this spec and has been adopted by
-the native spec (`apple/xcode/docs/2026-09-26-pyrgus-apple-design.md`,
+the native spec (`2026-09-26-pyrgus-apple-design.md`, in the native app repo,
 updated 2026-09-26): a segmented length control in the app, a conditional widget configuration
 parameter, and a copy of `src/core/test-vectors.json` in the native test suite.
 
