@@ -55,6 +55,8 @@ test('Secret 256 wraps without overflow or truncation at 320 px', async ({ page 
   const m = await secret.evaluate((el) => ({
     scrollWidth: el.scrollWidth,
     clientWidth: el.clientWidth,
+    scrollHeight: el.scrollHeight,
+    clientHeight: el.clientHeight,
     height: el.getBoundingClientRect().height,
     lineHeight: parseFloat(getComputedStyle(el).lineHeight),
     docWidth: document.documentElement.scrollWidth,
@@ -62,5 +64,6 @@ test('Secret 256 wraps without overflow or truncation at 320 px', async ({ page 
   expect(m.scrollWidth).toBeLessThanOrEqual(m.clientWidth)
   expect(m.docWidth).toBeLessThanOrEqual(320)
   expect(m.height).toBeGreaterThanOrEqual(2 * m.lineHeight) // wrapped, not clipped to one line
+  expect(m.scrollHeight).toBeLessThanOrEqual(m.clientHeight) // not vertically clipped (line-clamp, max-height)
   expect(await violations(page)).toEqual([])
 })
