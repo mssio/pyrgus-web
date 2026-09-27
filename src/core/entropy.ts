@@ -1,7 +1,10 @@
 import { formatSpec, type CharacterSpec, type FormatId, type Options } from './formats'
 import { WORDLIST } from './wordlist'
 
-/** log2 of the number of distinct strings the generator can produce, computed from the spec data. */
+/**
+ * Bits of entropy, computed from the spec data. Exact (log2 of the number of equally likely outputs) for every
+ * format except Custom Password, whose figure is an approximate upper bound: see isExactEntropy.
+ */
 export function entropyBits(id: FormatId, options: Options): number {
   const spec = formatSpec(id, options)
   switch (spec.kind) {
@@ -14,7 +17,10 @@ export function entropyBits(id: FormatId, options: Options): number {
   }
 }
 
-/** False when required sets overlap the base set (Strong): the figure is then an upper-bound approximation. */
+/**
+ * False when required sets overlap the base set (Custom Password, with or without symbols): the figure is then
+ * length × log2(base), an approximate upper bound, since required classes make the output non-uniform.
+ */
 export function isExactEntropy(id: FormatId, options: Options): boolean {
   const spec = formatSpec(id, options)
   return spec.kind !== 'chars' || requiredSetsAreDisjoint(spec)
@@ -42,7 +48,7 @@ function requiredSetsAreDisjoint(spec: CharacterSpec): boolean {
 function charsEntropy(spec: CharacterSpec): number {
   const k = spec.required.length
   if (!requiredSetsAreDisjoint(spec)) {
-    // Overlapping sets: every position is effectively drawn from the base set.
+    // Overlapping sets: an upper bound that treats every position as drawn from the base set.
     return spec.length * Math.log2(spec.base.length)
   }
   // Exact: ordered choice of k distinct positions × one character per required set × base for the rest.

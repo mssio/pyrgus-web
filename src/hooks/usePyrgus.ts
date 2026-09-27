@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { formatEntropy } from '../core/entropy'
-import type { FormatId, PinLength } from '../core/formats'
+import { DEFAULT_OPTIONS, type FormatId, type PinLength } from '../core/formats'
 import { generate } from '../core/generate'
 import { copySecret } from '../lib/clipboard'
 import { readFormat, readPinLength, writeFormat, writePinLength } from '../lib/preferences'
@@ -28,7 +28,7 @@ export type Pyrgus = {
 /** Fail closed: any generation error yields no password, never a fallback. */
 function tryGenerate(format: FormatId, pinLength: PinLength): string | null {
   try {
-    return generate(format, { pinLength })
+    return generate(format, { ...DEFAULT_OPTIONS, pinLength })
   } catch {
     return null
   }
@@ -98,7 +98,7 @@ export function usePyrgus(): Pyrgus {
     pinLength,
     password,
     error: password === null,
-    entropy: formatEntropy(format, { pinLength }),
+    entropy: formatEntropy(format, { ...DEFAULT_OPTIONS, pinLength }),
     copied: copiedId !== 0,
     copyFailed,
     announcement,

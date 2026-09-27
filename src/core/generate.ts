@@ -46,7 +46,11 @@ function group(value: string, size: number | undefined, separator: string | unde
 }
 
 function generateWords(spec: WordSpec, rng: RandomSource): string {
-  const words = Array.from({ length: spec.wordCount }, () => WORDLIST[randomInt(rng, WORDLIST.length)])
+  // Independent draws: repeats are allowed. Only the entry's first letter changes; its own hyphens stay.
+  const words = Array.from({ length: spec.wordCount }, () => {
+    const word = WORDLIST[randomInt(rng, WORDLIST.length)]
+    return spec.capitalizeFirst ? word[0].toUpperCase() + word.slice(1) : word
+  })
   const suffix = String(randomInt(rng, 10 ** spec.suffixDigits)).padStart(spec.suffixDigits, '0')
   return [...words, suffix].join(spec.separator)
 }

@@ -24,16 +24,21 @@ extension is out of scope.
 
 ## Formats
 
-| Format          | Example                    | Entropy                 |
-| --------------- | -------------------------- | ----------------------- |
-| Standard        | `khduvn-xeRvpr-mzt7ai`     | 90.1 bits               |
-| Strong          | `k7$Rm2xPq!vLz9Wn#tBc4eYh` | ~149 bits               |
-| Memorable       | `vivid-cobra-mango-42`     | 58.3 bits               |
-| PIN (4 / 6 / 8) | `478210`                   | 13.3 / 19.9 / 26.6 bits |
-| Secret 128      | 32 hex characters          | 128 bits                |
-| Secret 256      | 64 hex characters          | 256 bits                |
+| Format          | Example                                | Entropy                 |
+| --------------- | -------------------------------------- | ----------------------- |
+| Password        | `khduvn-xeRvpr-mzt7ai`                 | 90.1 bits               |
+| Custom Password | `k7$Rm2xPq!vLz9Wn#tBc4eYh`             | ~149 bits               |
+| Memorable       | `Vivid-Cobra-Mango-Drop-down-Lake-042` | 87.5 bits               |
+| PIN (4 / 6 / 8) | `478210`                               | 13.3 / 19.9 / 26.6 bits |
+| Secret 128      | 32 hex characters                      | 128 bits                |
+| Secret 256      | 64 hex characters                      | 256 bits                |
 
-Standard never uses the look-alike characters `l`, `O`, `I`, `0` or `1`.
+Password never uses the look-alike characters `l`, `O`, `I`, `0` or `1`.
+
+Custom Password is 24 characters with symbols; Memorable is six capitalized words from the EFF long
+wordlist and a three-digit suffix (`000`–`999`), joined by hyphens. The generator core already
+accepts other Custom Password lengths (6–32, symbols optional) and Memorable word counts (4–8) and
+separators (space, `-` or `_`); the page does not offer those controls yet.
 
 ## Development
 
