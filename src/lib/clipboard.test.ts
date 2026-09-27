@@ -16,6 +16,8 @@ beforeEach(() => {
   vi.useFakeTimers()
   vi.stubGlobal('navigator', { clipboard: { writeText, readText } })
   vi.stubGlobal('document', { hasFocus: () => focused })
+  // No jsdom here (environment: 'node'); a plain EventTarget is enough for window focus listeners.
+  vi.stubGlobal('window', new EventTarget())
 })
 
 afterEach(() => {
@@ -173,5 +175,70 @@ describe('copySecret', () => {
   it('rejects when the Clipboard API is missing', async () => {
     vi.stubGlobal('navigator', {})
     await expect(copySecret('abc')).rejects.toThrow()
+  })
+
+  describe('when a newer copy fails', () => {
+    it("keeps the previous secret's clear and fires it at its original deadline", async () => {
+      await copySecret('A')
+      await vi.advanceTimersByTimeAsync(60_000)
+      writeText.mockRejectedValueOnce(new DOMException('denied', 'NotAllowedError'))
+      await expect(copySecret('B')).rejects.toThrow('denied')
+      expect(clipboardText).toBe('A') // The rejected write never touched the clipboard.
+
+      await vi.advanceTimersByTimeAsync(30_000 - 1) // 90 s after A's copy.
+      expect(clipboardText).toBe('A')
+      await vi.advanceTimersByTimeAsync(1)
+      expect(clipboardText).toBe('')
+    })
+
+    it('an explicit cancel still cancels the re-armed clear', async () => {
+      await copySecret('A')
+      await vi.advanceTimersByTimeAsync(60_000)
+      writeText.mockRejectedValueOnce(new DOMException('denied', 'NotAllowedError'))
+      await expect(copySecret('B')).rejects.toThrow('denied')
+      cancelPendingClear()
+
+      await vi.advanceTimersByTimeAsync(30_000)
+      expect(readText).not.toHaveBeenCalled()
+      expect(clipboardText).toBe('A')
+    })
+  })
+
+  describe('when the 90 s mark is reached while unfocused', () => {
+    it('retries the guarded clear the next time the tab regains focus, once', async () => {
+      await copySecret('abc')
+      focused = false
+      await vi.advanceTimersByTimeAsync(CLEAR_AFTER_MS)
+      expect(readText).not.toHaveBeenCalled()
+      expect(clipboardText).toBe('abc')
+
+      focused = true
+      window.dispatchEvent(new Event('focus'))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(readText).toHaveBeenCalledTimes(1)
+      expect(clipboardText).toBe('')
+
+      window.dispatchEvent(new Event('focus'))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(readText).toHaveBeenCalledTimes(1) // The listener was one-shot.
+    })
+
+    it('a newer copy removes the stale focus listener; the new secret keeps its own timer', async () => {
+      await copySecret('old')
+      focused = false
+      await vi.advanceTimersByTimeAsync(CLEAR_AFTER_MS)
+      expect(readText).not.toHaveBeenCalled()
+
+      await copySecret('new')
+      window.dispatchEvent(new Event('focus'))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(readText).not.toHaveBeenCalled() // The old listener is gone; focus alone clears nothing.
+      expect(clipboardText).toBe('new')
+
+      focused = true
+      await vi.advanceTimersByTimeAsync(CLEAR_AFTER_MS)
+      expect(readText).toHaveBeenCalledTimes(1)
+      expect(clipboardText).toBe('')
+    })
   })
 })

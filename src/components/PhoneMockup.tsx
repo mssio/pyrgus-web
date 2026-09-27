@@ -39,7 +39,7 @@ export function PhoneMockup({ className }: { className?: string }) {
       <div className="flex flex-col gap-4 px-5 pt-8 text-white">
         <div className="text-xs font-medium text-zinc-400">Standard</div>
         {/* On the always-dark phone screen, force the dark-mode digit colour. */}
-        <div className="font-mono text-xl/8 font-medium wrap-anywhere [&_span]:text-indigo-400">
+        <div className="font-mono text-xl/8 font-medium wrap-anywhere [&_span]:text-indigo-400" translate="no">
           <SecretText value={SAMPLE_SECRET} />
         </div>
         <div className="text-xs text-zinc-400">90.1 bits of entropy</div>

@@ -45,8 +45,12 @@ export function GeneratorCard() {
             ? "Couldn't copy. Select the password and copy it manually."
             : 'Clipboard clears in 90s while this tab is open.'}
         </p>
+        {/*
+          A fresh child node per announcement (even a repeat of the same text) so screen readers
+          re-announce it: setting a live region's content to an unchanged string is not a DOM change.
+        */}
         <p role="status" className="sr-only">
-          {p.announcement}
+          <span key={p.announcementId}>{p.announcement}</span>
         </p>
       </div>
 

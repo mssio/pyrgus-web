@@ -105,6 +105,23 @@ describe('GeneratorCard', () => {
     expect(screen.getByText(/^Generated password: /)).toHaveClass('sr-only')
   })
 
+  it('replaces the status region child node on each regenerate, even with the same text', async () => {
+    const user = setup()
+    await user.click(screen.getByRole('button', { name: 'Regenerate' }))
+    const firstChild = screen.getByRole('status').firstChild
+    await user.click(screen.getByRole('button', { name: 'Regenerate' }))
+    const secondChild = screen.getByRole('status').firstChild
+    expect(screen.getByRole('status')).toHaveTextContent('New password generated')
+    expect(secondChild).not.toBe(firstChild)
+  })
+
+  it('marks the secret and its spelled form as non-translatable', () => {
+    setup()
+    const wrapper = screen.getByTestId('secret').closest('[translate="no"]')
+    expect(wrapper).not.toBeNull()
+    expect(wrapper).toContainElement(screen.getByText(/^Generated password: /))
+  })
+
   it('keeps every format menu item aligned by always rendering its icon slot', async () => {
     const user = setup()
     await user.click(screen.getByRole('button', { name: /^Format:/ }))

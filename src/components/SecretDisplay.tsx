@@ -19,7 +19,9 @@ export function SecretText({ value }: { value: string }) {
  */
 export function SecretDisplay({ value, onCopy }: { value: string; onCopy: () => void }) {
   return (
-    <div className="mt-6">
+    // translate="no": browser page translation would send the secret to the vendor's translation
+    // service and could visibly rewrite a Memorable passphrase's words.
+    <div className="mt-6" translate="no">
       <p
         data-testid="secret"
         aria-hidden="true"

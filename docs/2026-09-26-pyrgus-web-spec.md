@@ -296,13 +296,14 @@ One hook owns `format`, `pinLength`, `password`, `copied` and `error`, and expos
 - After 90 seconds, the page clears the clipboard **only if** the document has focus and
   `navigator.clipboard.readText()` returns exactly the value it wrote. If the read is refused or
   throws, it does nothing. The page never destroys something the user copied afterwards.
-- **Stated limitation:** browsers have no clipboard-expiry API. Clearing does not happen if the tab
-  is closed or unfocused, or where `readText()` is blocked (expected in Safari). The caption's
-  "while this tab is open" wording reflects this.
-- Each new copy cancels the previous pending clear and invalidates any in-flight write or read from
-  an older copy, so a slow clipboard operation cannot resurrect a stale clear. Regenerating or
-  switching format/PIN length does not itself cancel the clear already scheduled for a secret the
-  user copied before that change.
+- **Stated limitation:** browsers have no clipboard-expiry API. When the 90 s mark is reached while
+  the tab is unfocused, the guarded clear is retried the next time the tab regains focus. It still
+  does not happen if the tab is closed, or where `readText()` is blocked (expected in Safari).
+- A newer copy supersedes the previous pending clear once its write succeeds, and invalidates any
+  in-flight write or read from an older copy, so a slow clipboard operation cannot resurrect a stale
+  clear. If the newer write fails, the previous secret's clear is kept, or re-armed for its remaining
+  time if it had already been superseded. Regenerating or switching format/PIN length does not itself
+  cancel the clear already scheduled for a secret the user copied before that change.
 - If `writeText` fails (permission denied, unsupported browser), the button does **not** show
   "Copied"; the caption is replaced by "Couldn't copy. Select the password and copy it manually." The
   visible value is `select-all`, so one click selects it.
@@ -312,8 +313,12 @@ One hook owns `format`, `pinLength`, `password`, `copied` and `error`, and expos
 - The secret is spelled out character by character, announcing case and separators
   ("k, h, d, u, v, n, dash, x, e, capital R, …"), in an `sr-only` element next to the visible value;
   the visible value is `aria-hidden`. (`aria-label` is not permitted on a paragraph, and a hidden
-  sibling keeps the spelled text out of a manual text selection.)
-- A polite live region announces "Copied" and "New password generated".
+  sibling keeps the spelled text out of a manual text selection.) Both the visible value and its
+  spelled form are marked `translate="no"`, so browser page translation does not send the secret to
+  the vendor's translation service and does not rewrite a Memorable passphrase's words.
+- A polite live region announces "Copied" and "New password generated". Setting the same text twice
+  in a row still produces a distinct announcement (each is its own DOM node), so screen readers
+  re-announce a repeat.
 - Full keyboard operation with visible focus rings. WCAG AA contrast in both themes.
 
 ### Error state

@@ -17,6 +17,8 @@ export type Pyrgus = {
   copied: boolean
   copyFailed: boolean
   announcement: string
+  /** Bumps on every announcement, including a repeat of the same text, so it can key a DOM replacement. */
+  announcementId: number
   setFormat(id: FormatId): void
   setPinLength(n: PinLength): void
   regenerate(): void
@@ -40,7 +42,13 @@ export function usePyrgus(): Pyrgus {
   const [copiedId, setCopiedId] = useState(0)
   const [copyFailed, setCopyFailed] = useState(false)
   const [announcement, setAnnouncement] = useState('')
+  const [announcementId, setAnnouncementId] = useState(0)
   const feedbackVersion = useRef(0)
+
+  function announce(text: string) {
+    setAnnouncement(text)
+    setAnnouncementId((id) => id + 1)
+  }
 
   useEffect(() => {
     if (copiedId === 0) return
@@ -53,7 +61,7 @@ export function usePyrgus(): Pyrgus {
     setPassword(tryGenerate(nextFormat, nextPinLength))
     setCopiedId(0)
     setCopyFailed(false)
-    setAnnouncement('New password generated')
+    announce('New password generated')
   }
 
   function setFormat(id: FormatId) {
@@ -76,12 +84,12 @@ export function usePyrgus(): Pyrgus {
       if (version !== feedbackVersion.current) return
       setCopyFailed(false)
       setCopiedId((id) => id + 1)
-      setAnnouncement('Copied')
+      announce('Copied')
     } catch {
       if (version !== feedbackVersion.current) return
       setCopiedId(0)
       setCopyFailed(true)
-      setAnnouncement('Copy failed')
+      announce('Copy failed')
     }
   }
 
@@ -94,6 +102,7 @@ export function usePyrgus(): Pyrgus {
     copied: copiedId !== 0,
     copyFailed,
     announcement,
+    announcementId,
     setFormat,
     setPinLength,
     regenerate: () => next(format, pinLength),

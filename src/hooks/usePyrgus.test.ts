@@ -1,17 +1,21 @@
 // @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cancelPendingClear } from '../lib/clipboard'
+import { CLEAR_AFTER_MS, cancelPendingClear } from '../lib/clipboard'
 import { FORMAT_KEY, PIN_LENGTH_KEY } from '../lib/preferences'
 import { COPIED_MS, usePyrgus } from './usePyrgus'
 
-const writeText = vi.fn(async () => {})
+let clipboardText: string
+const writeText = vi.fn(async (text: string) => {
+  clipboardText = text
+})
 
 beforeEach(() => {
+  clipboardText = ''
   writeText.mockClear()
   Object.defineProperty(navigator, 'clipboard', {
     configurable: true,
-    value: { writeText, readText: vi.fn(async () => '') },
+    value: { writeText, readText: vi.fn(async () => clipboardText) },
   })
 })
 
@@ -156,5 +160,33 @@ describe('usePyrgus', () => {
     expect(result.current.copied).toBe(false)
     expect(result.current.copyFailed).toBe(true)
     expect(result.current.announcement).toBe('Copy failed')
+  })
+
+  it('regenerating dismisses copy feedback but keeps the 90 s clipboard clear armed', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true) // jsdom defaults to unfocused.
+    const { result } = renderHook(() => usePyrgus())
+    await act(() => result.current.copy())
+    expect(clipboardText).toBe(result.current.password)
+
+    act(() => result.current.regenerate())
+    expect(result.current.copied).toBe(false) // Feedback is dismissed...
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(CLEAR_AFTER_MS)
+    })
+    expect(writeText).toHaveBeenCalledWith('') // ...but the clear of the already-copied secret still fires.
+    expect(clipboardText).toBe('')
+  })
+
+  it('gives two consecutive regenerate() calls two distinct announcement events', () => {
+    const { result } = renderHook(() => usePyrgus())
+    act(() => result.current.regenerate())
+    const first = { text: result.current.announcement, id: result.current.announcementId }
+    act(() => result.current.regenerate())
+    const second = { text: result.current.announcement, id: result.current.announcementId }
+    expect(first.text).toBe('New password generated')
+    expect(second.text).toBe('New password generated')
+    expect(second.id).not.toBe(first.id)
   })
 })
