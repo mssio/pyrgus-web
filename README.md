@@ -64,11 +64,10 @@ Rules for contributors and coding agents are in [`AGENTS.md`](AGENTS.md).
 
 ### Specs and plans
 
-The design lives in [`docs/`](docs/). [`docs/2026-09-26-pyrgus-web-spec.md`](docs/2026-09-26-pyrgus-web-spec.md)
-is the binding spec: it always describes the site as built. Each later change gets a dated pair,
-`docs/YYYY-MM-DD-<topic>-spec.md` and `docs/YYYY-MM-DD-<topic>-plan.md`. The spec is approved before
-the plan is written, and the binding spec is updated in the same commit as the code. The full rules
-are in [`AGENTS.md`](AGENTS.md).
+The design docs are kept outside this repository, in the maintainer's Pyrgus workspace alongside the
+native app. A binding spec always describes the site as built. Each later change gets a dated pair,
+`YYYY-MM-DD-<topic>-spec.md` and `YYYY-MM-DD-<topic>-plan.md`. The spec is approved before the plan
+is written, and the binding spec is updated together with the code.
 
 ## Testing
 
