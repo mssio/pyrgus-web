@@ -1,7 +1,8 @@
 # Pyrgus Web — Apps Dialog, Centered Generator and Docs Rules — Design
 
 **Date:** 2026-09-26
-**Status:** Draft, awaiting review.
+**Status:** Approved 2026-09-26.
+**Plan:** `docs/2026-09-26-apps-dialog-plan.md`.
 **Amends:** `docs/2026-09-26-pyrgus-web-spec.md` (the binding spec). The amendments listed under
 [Binding spec changes](#binding-spec-changes) are applied to it in the same commit as the code, per
 `AGENTS.md`.
@@ -129,7 +130,18 @@ licence exclusion.
 
 - A new test opens the dialog, checks it is visible, closes it with Escape, and asserts zero CSP
   or Trusted Types violations and no console errors.
+- A second new test opens the dialog at 320 × 640 and asserts **Close** is in view with no
+  horizontal overflow.
 - The existing 320 px wrapping test is unchanged and must still pass.
+
+**`e2e/layout.spec.ts`** (new, Playwright):
+
+- At 1280 × 900 the generator is vertically centred: the gap above it equals the gap below it
+  (±1 px).
+- The column is 512 px (32rem) wide with a 30 px secret at 1280 px; 320 px wide with a 24 px secret
+  at 320 px.
+- Secret 256 wraps without horizontal overflow at 640 px.
+- At 1280 × 400 the content overlaps neither header nor footer, and the page scrolls.
 
 **Visual check** (manual, before commit): light and dark themes at 320 px, 768 px and 1280 px. The
 generator is vertically centred and the dialog fits without clipping.
@@ -231,7 +243,6 @@ Applied to `docs/2026-09-26-pyrgus-web-spec.md` in the implementation commit:
 5. **README section 8 and `LICENSE`:** the exclusion lists only `src/components/catalyst/`.
 6. **Project structure:** `phone-frame.svg`, `AppsSection.tsx` and `PhoneMockup.tsx` are removed;
    `AppsDialog.tsx` is added; the Catalyst list gains `dialog`.
-
 7. **Repository documentation → `AGENTS.md`:** the contents list gains "Specs and plans" and
    "Downloads and installs", as described above; item 1 ("What this is") notes that design changes
    come as change specs that amend this one.
@@ -239,6 +250,8 @@ Applied to `docs/2026-09-26-pyrgus-web-spec.md` in the implementation commit:
    no rules of its own.
 9. **Repository documentation → `README.md`:** the Development section gains the "Specs and plans"
    paragraph.
+10. **Testing:** "Component tests" and "Playwright smoke test" gain the dialog and layout checks
+    listed under [Testing](#testing).
 
 The same commit updates `LICENSE` and the README's licence line to match item 5. The documentation
 changes (items 7–9, plus `AGENTS.md` and `README.md` themselves) may land in their own commit, since
