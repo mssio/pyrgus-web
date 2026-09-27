@@ -10,7 +10,7 @@ The [approved spec](2026-09-26-pyrgus-web-spec.md) defines the requirements; the
 | 3 | Format data | Character alphabets, the six format definitions, PIN length options, the verified EFF wordlist, and shared data for checking native-app parity. | Low: data and transcription; wordlist download and hash check | GPT-6 Luna ✅ | GPT-6 Sol ✅ |
 | 4 | Password and key generation | Generation for Standard, Strong, Memorable, PIN, Secret 128, and Secret 256. Tests output shape, exclusions, deterministic test inputs, and distribution. | Medium: all code given, but statistical tests may need diagnosis | GPT-6 Luna ✅ | GPT-6 Sol ✅ |
 | 5 | Entropy | Entropy calculations derived from format data and display formatting, including the approximate Strong figure. Checks formulas against the shared vectors. | Low: one small module, all code given | GPT-6 Luna ✅ | GPT-6 Sol ✅ |
-| 6 | Browser helpers | Clipboard copying and guarded 90-second clearing, validated preference storage, and character-by-character spoken output. Tests permission failures, blocked storage, and delayed clipboard operations. | High: async race conditions, fake timers | Sonnet 5 | Opus 5.5 |
+| 6 | Browser helpers | Clipboard copying and guarded 90-second clearing, validated preference storage, and character-by-character spoken output. Tests permission failures, blocked storage, and delayed clipboard operations. | High: async race conditions, fake timers | GPT-6 Sol ✅ | GPT-6 Astra ✅ |
 | 7 | Application state | The `usePyrgus` hook: generation, format and PIN changes, preferences, copy feedback, errors, and announcements. Prevents stale copy results from updating feedback after newer actions. | High: React state with stale async results | Sonnet 5 | Opus 5.5 |
 | 8 | Generator UI | Catalyst components, self-hosted fonts, format picker, PIN length control, wrapping secret display, copy/regenerate buttons, and error states. Includes component tests and visual checks. | High: copied vendor code, Headless UI in jsdom, many files | Sonnet 5 | Sonnet 5 |
 | 9 | Complete page | Header, footer, native-app “coming soon” section, fixed-sample phone and widget mockups, metadata, favicon, social image, Apple touch icon, and static 404 page. | Medium: many files, Pocket port, PNG rendering | Sonnet 5 | Sonnet 5 |
@@ -19,9 +19,11 @@ The [approved spec](2026-09-26-pyrgus-web-spec.md) defines the requirements; the
 | 12 | Documentation and final verification | The README, verification of its claims, reconciliation with the spec where needed, and a final clean-install check of all automated suites. | Low–medium: prose, and claims checked against the code | Haiku 4.5 | Sonnet 5 |
 | — | Final whole-branch review | Reviews all 12 tasks together, plus the deferred minor findings. | High | — | Opus 5.5 |
 
-✅ = implemented and reviewed. Tasks 1–5 are complete; Task 6 is next. Other rows are the planned assignment and may change.
+✅ = implemented and reviewed. Tasks 1–6 are complete; Task 7 is next. Other rows are the planned assignment and may change.
 
 Tasks 3–5 used GPT-6 Luna implementers and GPT-6 Sol reviewers because the planned Claude models were unavailable in that session. All 78 tests, lint, and build passed under Node 24. Two minor Task 3 follow-ups are recorded for final review: correct the shell-quoting claim in `charsets.ts`, and add direct assertions for all preset fields. Native-app synchronization of the new shared vectors remains a separate follow-up.
+
+Task 6 used GPT-6 Sol for implementation and GPT-6 Astra for review. Its 29 helper tests and the full 107-test suite passed, along with lint and build. Review found no issues. Clipboard clearing remains best effort; real-browser and screen-reader integration checks belong to later tasks and launch verification.
 
 ### How models are chosen
 
