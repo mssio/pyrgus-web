@@ -1,9 +1,6 @@
 // Test-only RandomSource implementations. Never import from src/ production code.
 
-/** Structural copy of src/core/random.ts's RandomSource, so this file has no dependency on it. */
-interface RandomSource {
-  nextUint32(): number
-}
+import type { RandomSource } from '../src/core/random'
 
 /** Deterministic 32-bit generator (mulberry32). Statistically fine for tests; NOT secure. */
 export class SeededRandom implements RandomSource {
