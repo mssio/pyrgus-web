@@ -129,3 +129,44 @@ test('the apps dialog fits a 320 × 640 phone with a scrolling body and Close in
   expect(docWidth).toBeLessThanOrEqual(320)
   expect(await violations(page)).toEqual([])
 })
+
+for (const { width, height } of [
+  { width: 1280, height: 250 },
+  { width: 320, height: 320 },
+]) {
+  test(`the apps dialog stays readable at ${width} × ${height} with the whole dialog scrolling`, async ({ page }) => {
+    await page.setViewportSize({ width, height })
+    await page.goto('/')
+    await page.getByRole('button', { name: APPS_PILL }).click()
+
+    const dialog = page.getByRole('dialog', { name: APPS_TITLE })
+    await expect(dialog).toBeAttached()
+    // Reaching the pill at this tiny viewport can itself scroll the page (it sits below the fold);
+    // what matters is that the page behind never scrolls further once the dialog is open and locked.
+    const pageScroll = await page.evaluate(() => window.scrollY)
+
+    const finalFeatureTitle = dialog.getByText('Six formats', { exact: true })
+    const finalFeatureBody = dialog.getByText('Passwords, memorable phrases, PINs, and 128- and 256-bit hex secrets.')
+    await finalFeatureBody.scrollIntoViewIfNeeded()
+    await expect(finalFeatureTitle).toBeInViewport({ ratio: 1 })
+    await expect(finalFeatureBody).toBeInViewport({ ratio: 1 })
+    const lineHeight = await finalFeatureBody.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight))
+    const featureBox = await finalFeatureBody.boundingBox()
+    expect(featureBox?.height ?? 0).toBeGreaterThanOrEqual(lineHeight)
+
+    // Whichever element holds the features (the dialog body) must also render at a usable height.
+    const body = dialog.locator('div.min-h-0.overflow-y-auto')
+    const bodyBox = await body.boundingBox()
+    expect(bodyBox?.height ?? 0).toBeGreaterThanOrEqual(lineHeight)
+
+    const close = dialog.getByRole('button', { name: 'Close' })
+    await close.scrollIntoViewIfNeeded()
+    await expect(close).toBeInViewport({ ratio: 1 })
+    await close.click()
+    await expect(dialog).not.toBeAttached()
+
+    // The page behind never scrolls, whichever container scrolled to reveal the content.
+    expect(await page.evaluate(() => window.scrollY)).toBe(pageScroll)
+    expect(await violations(page)).toEqual([])
+  })
+}

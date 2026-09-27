@@ -39,7 +39,11 @@ export function AppsDialog() {
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        className="flex max-h-[calc(100dvh-1.5rem)] flex-col sm:max-h-[calc(100dvh-2rem)]"
+        // Below 32rem (512px) tall there isn't room for chrome + a capped, independently-scrolling
+        // body without collapsing the body to zero height. Below that threshold the panel takes its
+        // natural height instead, and Catalyst's outer `fixed inset-0 overflow-y-auto` container
+        // scrolls the whole dialog — the page behind stays scroll-locked either way.
+        className="[@media(min-height:32rem)]:flex [@media(min-height:32rem)]:max-h-[calc(100dvh-1.5rem)] [@media(min-height:32rem)]:flex-col [@media(min-height:32rem)]:sm:max-h-[calc(100dvh-2rem)]"
       >
         <Badge color="indigo" className="shrink-0 self-start">
           Coming soon · iPhone · iPad · Mac

@@ -87,15 +87,20 @@ One component owns the open state (`useState(false)`) and renders two things:
 trapped inside; Escape and a backdrop click close it; focus returns to the pill on close; the page
 behind is inert and scroll-locked.
 
-**Viewport fit:** `AppsDialog` constrains the panel to a flex column with a maximum height of
-`calc(100dvh - 1.5rem)`, or `calc(100dvh - 2rem)` from 640 px. The chip, title, description and
-Close action do not shrink; the chip keeps its natural width. The body uses `min-h-0 overflow-y-auto`
-so the widget and all four feature points remain available by scrolling, while Close stays visible.
-No content or typography is reduced, and the copied Catalyst component remains unchanged.
+**Viewport fit:** On viewports at least 32rem (512 px) tall, `AppsDialog` constrains the panel to a
+flex column with a maximum height of `calc(100dvh - 1.5rem)`, or `calc(100dvh - 2rem)` from 640 px.
+The chip, title, description and Close action do not shrink; the chip keeps its natural width. The
+body uses `min-h-0 overflow-y-auto` so the widget and all four feature points remain available by
+scrolling, while Close stays visible. Below that height threshold the panel takes its natural
+height instead — none of the max-height, flex-column or body-scrolling classes apply — and
+Catalyst's outer `fixed inset-0 overflow-y-auto` container scrolls the whole dialog so every
+feature and Close remain reachable; the page behind is never what scrolls. No content or
+typography is reduced, and the copied Catalyst component remains unchanged.
 
 **Mobile:** Below 640 px the dialog is a bottom sheet. At 320 × 640 the panel fits the viewport,
 with the body scrolling to reveal the remaining features and Close fully in view. The page behind
-remains scroll-locked. On very short screens Catalyst's outer container can also scroll as needed.
+remains scroll-locked. Below the 32rem height threshold (e.g. very short or landscape-phone
+viewports), Catalyst's outer container scrolls the whole dialog instead, for the same reason.
 
 ### Catalyst component — `src/components/catalyst/dialog.tsx`
 

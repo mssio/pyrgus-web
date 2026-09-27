@@ -344,12 +344,14 @@ rendered in the page flow, and there is no `#apps` anchor.
 - **Apple's App Store badges are not used** until the apps are live, per Apple's badge guidelines.
 - **Behaviour** comes from Headless UI: focus moves into the dialog on open, Tab is trapped, Escape
   and a backdrop click close it, focus returns to the pill, and the page behind is inert and
-  scroll-locked. Below 640 px it is a bottom sheet. `AppsDialog` constrains the panel height to
-  `calc(100dvh - 1.5rem)` (`calc(100dvh - 2rem)` from 640 px) and uses a flex column with a
-  scrollable body. The chip, title, description and Close action do not shrink. At 320 × 640,
-  Close stays fully visible while the body scrolls through the widget and all four feature points.
-  On very short screens Catalyst’s outer container can also scroll; the page behind stays locked.
-  These adjustments use Tailwind classes, with the copied Catalyst component and CSP unchanged.
+  scroll-locked. Below 640 px it is a bottom sheet. On viewports at least 32rem (512 px) tall,
+  `AppsDialog` constrains the panel height to `calc(100dvh - 1.5rem)` (`calc(100dvh - 2rem)` from
+  640 px) and uses a flex column with a scrollable body; the chip, title, description and Close
+  action do not shrink. At 320 × 640, Close stays fully visible while the body scrolls through the
+  widget and all four feature points. Below that height threshold the panel takes its natural
+  height instead and Catalyst's outer `fixed inset-0 overflow-y-auto` container scrolls the whole
+  dialog, so every feature and Close stay reachable; the page behind is never what scrolls, either
+  way. These adjustments use Tailwind classes, with the copied Catalyst component and CSP unchanged.
 
 ### Footer
 
