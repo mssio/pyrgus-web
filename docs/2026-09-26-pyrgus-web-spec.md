@@ -327,16 +327,28 @@ when the viewport is shorter than the content, the page scrolls. Top to bottom:
 
 ### State — `usePyrgus()`
 
-One hook owns `format`, `pinLength`, `password`, `copied` and `error`, and exposes `setFormat`,
-`setPinLength`, `regenerate()` and `copy()`. Components are presentational.
+One hook owns `format`, `pinLength`, `customLength`, `includeSymbols`, `memorableWordCount`,
+`memorableSeparator`, `password`, `copied` and `error`, and exposes `setFormat`, `setPinLength`,
+`setCustomLength`, `setIncludeSymbols`, `setMemorableWordCount`, `setMemorableSeparator`,
+`regenerate()` and `copy()`. Components are presentational. (The generator card does not yet render
+controls for the four Custom Password and Memorable setters, so the page uses their defaults.)
 
-- A password is generated on mount and whenever `format` or `pinLength` changes.
+- A password is generated on mount and whenever `format`, `pinLength` or a Custom Password or
+  Memorable option changes. Generation and the entropy caption always receive the same complete
+  options object, built from the next values, never from stale state.
+- An option setter called with its current value is a no-op: no regeneration, no announcement.
+- `customLength` (24), `includeSymbols` (on), `memorableWordCount` (6) and `memorableSeparator`
+  (`-`) live in page state only. They survive switching to another format and back, and reset to
+  their defaults on reload, even when the saved format is Custom Password or Memorable. They are
+  never read from or written to storage.
+- A generation error after any change clears the password and shows the error state, never a stale
+  secret beside new option values.
 - `format` and `pinLength` persist in `localStorage` (keys `pyrgus.format`, `pyrgus.pinLength`).
   Reads are validated; anything missing, invalid or throwing falls back to `standard` / `6`. Stored `standard`, `strong` and
   `memorable` from before the rename remain valid and display their new names; no migration is needed.
 - **The password is never persisted.**
 - A version counter ignores stale copy feedback: if a copy resolves after a newer copy, a
-  regenerate, or a format/PIN change, it never updates `copied`/`copyFailed`. This does not cancel
+  regenerate, or a format, PIN or Custom Password/Memorable option change, it never updates `copied`/`copyFailed`. This does not cancel
   the clipboard's own 90 s clear of a secret already copied — see Clipboard.
 
 ### Clipboard
@@ -351,8 +363,8 @@ One hook owns `format`, `pinLength`, `password`, `copied` and `error`, and expos
 - A newer copy supersedes the previous pending clear once its write succeeds, and invalidates any
   in-flight write or read from an older copy, so a slow clipboard operation cannot resurrect a stale
   clear. If the newer write fails, the previous secret's clear is kept, or re-armed for its remaining
-  time if it had already been superseded. Regenerating or switching format/PIN length does not itself
-  cancel the clear already scheduled for a secret the user copied before that change.
+  time if it had already been superseded. Regenerating or changing format, PIN length or a Custom
+  Password/Memorable option does not itself cancel the clear already scheduled for a secret the user copied before that change.
 - If `writeText` fails (permission denied, unsupported browser), the button does **not** show
   "Copied"; the caption is replaced by "Couldn't copy. Select the password and copy it manually." The
   visible value is `select-all`, so one click selects it.
@@ -700,8 +712,16 @@ Tests are colocated with the code they test (`*.test.ts` / `*.test.tsx`); Playwr
 
 - Picker switches formats; the PIN control appears only for PIN; changing PIN length regenerates.
 - Copy calls `navigator.clipboard.writeText`; "Copied" appears then clears.
-- Persisted settings restore; invalid stored values fall back to defaults; the password is never
-  written to `localStorage`.
+- Persisted settings restore, including saved `standard`, `strong` and `memorable`; invalid stored
+  values fall back to defaults; the password is never written to `localStorage`.
+- Hook (`usePyrgus.test.ts`): each option setter regenerates with the complete next options (checked
+  through a pass-through spy on `generate`), refreshes entropy, clears copy feedback and announces
+  once; a no-op call does nothing; options survive format switches and reset on remount; only
+  `pyrgus.format` and `pyrgus.pinLength` are ever written, and generation works with storage
+  throwing. A delayed copy that resolves or rejects after an option change leaves the new password's
+  feedback alone; the 90 s clear of a secret copied before the change still fires; a generation
+  failure after a change (following a successful or failed copy) fails closed, and the next change
+  recovers.
 - Clipboard clear runs only when focus and value match; a newer copy cancels the older timer.
 - Error state renders when randomness is unavailable.
 - The apps pill opens a dialog named "Pyrgus is coming to iPhone, iPad & Mac"; Escape and Close
