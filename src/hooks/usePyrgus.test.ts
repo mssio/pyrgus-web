@@ -77,20 +77,28 @@ describe('usePyrgus', () => {
   })
 
   it.each([
-    ['regenerate', 'resolve'], ['regenerate', 'reject'],
-    ['format', 'resolve'], ['format', 'reject'],
-    ['pin length', 'resolve'], ['pin length', 'reject'],
+    ['regenerate', 'resolve'],
+    ['regenerate', 'reject'],
+    ['format', 'resolve'],
+    ['format', 'reject'],
+    ['pin length', 'resolve'],
+    ['pin length', 'reject'],
   ] as const)('ignores a stale copy after %s when its write later %s', async (change, outcome) => {
     let resolveWrite!: () => void
     let rejectWrite!: (reason: Error) => void
-    writeText.mockImplementationOnce(() => new Promise<void>((resolve, reject) => {
-      resolveWrite = resolve
-      rejectWrite = reject
-    }))
+    writeText.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          resolveWrite = resolve
+          rejectWrite = reject
+        }),
+    )
     const { result } = renderHook(() => usePyrgus())
     act(() => result.current.setFormat('pin'))
     let pendingCopy!: Promise<void>
-    act(() => { pendingCopy = result.current.copy() })
+    act(() => {
+      pendingCopy = result.current.copy()
+    })
     act(() => {
       if (change === 'regenerate') result.current.regenerate()
       else if (change === 'format') result.current.setFormat('secret256')
@@ -114,13 +122,18 @@ describe('usePyrgus', () => {
       vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
       let resolveWrite!: () => void
       let rejectWrite!: (reason: Error) => void
-      writeText.mockImplementationOnce(() => new Promise<void>((resolve, reject) => {
-        resolveWrite = resolve
-        rejectWrite = reject
-      }))
+      writeText.mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            resolveWrite = resolve
+            rejectWrite = reject
+          }),
+      )
       const { result } = renderHook(() => usePyrgus())
       let first!: Promise<void>
-      act(() => { first = result.current.copy() })
+      act(() => {
+        first = result.current.copy()
+      })
       await act(() => result.current.copy())
       act(() => vi.advanceTimersByTime(1000))
       await act(async () => {

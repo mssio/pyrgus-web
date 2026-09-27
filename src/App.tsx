@@ -1,7 +1,9 @@
+import { GeneratorCard } from './components/GeneratorCard'
+
 export default function App() {
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-semibold">Pyrgus</h1>
+    <main className="py-12">
+      <GeneratorCard />
     </main>
   )
 }

@@ -36,4 +36,11 @@ export default defineConfig([
       ],
     },
   },
+  {
+    // Copied Tailwind Plus code: keep it pristine; relax only the rules it trips.
+    files: ['src/components/catalyst/**'],
+    rules: {
+      'prefer-const': 'off',
+    },
+  },
 ])
