@@ -23,7 +23,7 @@ describe('generate — shape', () => {
     }
   })
 
-  it('Strong: 24 chars from the 75-char base with every class present', () => {
+  it('Custom Password: 24 chars from the 75-char base with every class present by default', () => {
     const rng = new SeededRandom(2)
     for (let i = 0; i < 2000; i++) {
       const pw = generate('strong', DEFAULT_OPTIONS, rng)
@@ -33,22 +33,16 @@ describe('generate — shape', () => {
     }
   })
 
-  it('Memorable: four wordlist words then a zero-padded two-digit suffix', () => {
-    const rng = new ScriptedRandom([0, 1, 7775, 3, 7])
-    expect(generate('memorable', DEFAULT_OPTIONS, rng)).toBe(
-      `${WORDLIST[0]}-${WORDLIST[1]}-${WORDLIST[7775]}-${WORDLIST[3]}-07`,
+  it('Memorable: six capitalized entries then a hyphen and a zero-padded three-digit suffix by default', () => {
+    expect(generate('memorable', DEFAULT_OPTIONS, new ScriptedRandom([0, 0, 0, 0, 0, 0, 7]))).toBe(
+      'Abacus-Abacus-Abacus-Abacus-Abacus-Abacus-007',
     )
-  })
-
-  it('Memorable: always ends in -NN', () => {
-    const rng = new SeededRandom(3)
-    for (let i = 0; i < 500; i++) expect(generate('memorable', DEFAULT_OPTIONS, rng)).toMatch(/^[a-z-]+-\d{2}$/)
   })
 
   it.each(PIN_LENGTHS)('PIN %i: exactly that many digits', (pinLength) => {
     const rng = new SeededRandom(pinLength)
     for (let i = 0; i < 500; i++) {
-      expect(generate('pin', { pinLength }, rng)).toMatch(new RegExp(`^\\d{${pinLength}}$`))
+      expect(generate('pin', { ...DEFAULT_OPTIONS, pinLength }, rng)).toMatch(new RegExp(`^\\d{${pinLength}}$`))
     }
   })
 
@@ -146,7 +140,7 @@ describe('generate — uniformity', () => {
 
   it.each(PIN_LENGTHS)('PIN %i: digits are flat at every position', (pinLength) => {
     const rng = new SeededRandom(pinLength * 1000)
-    const pins = Array.from({ length: 20_000 }, () => generate('pin', { pinLength }, rng))
+    const pins = Array.from({ length: 20_000 }, () => generate('pin', { ...DEFAULT_OPTIONS, pinLength }, rng))
     for (let pos = 0; pos < pinLength; pos++) {
       expectUniform(
         countBy(
@@ -156,5 +150,87 @@ describe('generate — uniformity', () => {
         `PIN ${pinLength} position ${pos}`,
       )
     }
+  })
+})
+
+const CUSTOM_LENGTHS = Array.from({ length: 27 }, (_, i) => i + 6)
+const CUSTOM_CASES = CUSTOM_LENGTHS.flatMap((length) => [true, false].map((symbols) => [length, symbols] as const))
+
+describe('generate — Custom Password options', () => {
+  it.each(CUSTOM_CASES)('length %i, symbols %s: exact length, alphabet and required classes', (length, symbols) => {
+    const rng = new SeededRandom(length * 2 + Number(symbols))
+    const alphabet = symbols ? STRONG_BASE : LOWER + UPPER + DIGITS
+    expect(alphabet).toHaveLength(symbols ? 75 : 62)
+    const options = { ...DEFAULT_OPTIONS, customLength: length, includeSymbols: symbols }
+    for (let i = 0; i < 100; i++) {
+      const pw = generate('strong', options, rng)
+      expect(pw).toHaveLength(length)
+      expect([...pw].every((c) => alphabet.includes(c))).toBe(true)
+      for (const set of [LOWER, UPPER, DIGITS]) expect(count(pw, set)).toBeGreaterThanOrEqual(1)
+      if (symbols) expect(count(pw, SYMBOLS)).toBeGreaterThanOrEqual(1)
+      else expect(count(pw, SYMBOLS)).toBe(0)
+    }
+  })
+})
+
+const SEPARATORS = [' ', '-', '_'] as const
+const WORD_COUNTS = [4, 5, 6, 7, 8]
+const capitalize = (w: string) => w[0].toUpperCase() + w.slice(1)
+const HYPHENATED = ['drop-down', 'felt-tip', 't-shirt', 'yo-yo'].map((w) => WORDLIST.indexOf(w))
+/** Repeated index 0, all four internally hyphenated entries and both ends of the list. */
+const INDICES = [0, 0, ...HYPHENATED, 1234, 7775]
+
+describe('generate — Memorable options', () => {
+  it('finds all four internally hyphenated entries', () => {
+    expect(HYPHENATED.every((i) => i >= 0)).toBe(true)
+  })
+
+  it('keeps internal hyphens intact when joining with another separator', () => {
+    const options = { ...DEFAULT_OPTIONS, memorableWordCount: 4, memorableSeparator: '_' as const }
+    expect(generate('memorable', options, new ScriptedRandom([...HYPHENATED, 0]))).toBe(
+      'Drop-down_Felt-tip_T-shirt_Yo-yo_000',
+    )
+  })
+
+  const cases = WORD_COUNTS.flatMap((n) =>
+    SEPARATORS.flatMap((sep) => [0, 7, 42, 999].map((suffix) => [n, sep, suffix] as const)),
+  )
+
+  it.each(cases)('%i words joined by %j with suffix %i', (n, sep, suffix) => {
+    const indices = INDICES.slice(0, n)
+    const rng = new ScriptedRandom([...indices, suffix])
+    const expected = [...indices.map((i) => capitalize(WORDLIST[i])), String(suffix).padStart(3, '0')].join(sep)
+    const options = { ...DEFAULT_OPTIONS, memorableWordCount: n, memorableSeparator: sep }
+    expect(generate('memorable', options, rng)).toBe(expected)
+    expect(rng.consumed).toBe(n + 1)
+  })
+
+  const combos = WORD_COUNTS.flatMap((n) => SEPARATORS.map((sep) => [n, sep] as const))
+  const words = new Set(WORDLIST)
+
+  it.each(combos)('%i words joined by %j: sampled entries, joins and suffix are well formed', (n, sep) => {
+    const rng = new SeededRandom(n * 10 + SEPARATORS.indexOf(sep))
+    const options = { ...DEFAULT_OPTIONS, memorableWordCount: n, memorableSeparator: sep }
+    const escaped = sep.replace(/[-]/g, '\\-')
+    // A join is the separator followed by a capitalized entry or the suffix; entries' own hyphens precede lowercase.
+    const join = new RegExp(`${escaped}(?=[A-Z\\d])`)
+    for (let i = 0; i < 200; i++) {
+      const pw = generate('memorable', options, rng)
+      expect(pw.startsWith(sep)).toBe(false)
+      const parts = pw.split(join)
+      expect(parts).toHaveLength(n + 1)
+      expect(parts.at(-1)).toMatch(/^\d{3}$/)
+      for (const entry of parts.slice(0, -1)) {
+        expect(entry[0]).toMatch(/[A-Z]/)
+        expect(words.has(entry[0].toLowerCase() + entry.slice(1))).toBe(true)
+      }
+    }
+  })
+
+  it('rejects biased-zone draws for both the words and the suffix', () => {
+    // Limits: 7776 → 4294964736, 1000 → 4294967000. Values at or above are redrawn, never reduced.
+    const rng = new ScriptedRandom([4294964736, 0, 0, 0, 0, 0, 0, 4294967000, 7])
+    expect(generate('memorable', DEFAULT_OPTIONS, rng)).toBe('Abacus-Abacus-Abacus-Abacus-Abacus-Abacus-007')
+    expect(rng.consumed).toBe(9)
   })
 })

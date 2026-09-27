@@ -8,7 +8,7 @@ afterEach(() => {
 })
 
 describe('preferences', () => {
-  it('defaults to Standard and 6 when nothing is stored', () => {
+  it('defaults to Password and 6 when nothing is stored', () => {
     expect(readFormat()).toBe('standard')
     expect(readPinLength()).toBe(6)
   })
@@ -20,6 +20,11 @@ describe('preferences', () => {
     expect(localStorage.getItem(PIN_LENGTH_KEY)).toBe('8')
     expect(readFormat()).toBe('secret256')
     expect(readPinLength()).toBe(8)
+  })
+
+  it.each(['standard', 'strong', 'memorable'])('restores saved %s', (id) => {
+    localStorage.setItem(FORMAT_KEY, id)
+    expect(readFormat()).toBe(id)
   })
 
   it.each(['', 'Standard', 'secret512', '{"x":1}'])('ignores a junk format %j', (value) => {

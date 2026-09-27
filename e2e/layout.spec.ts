@@ -66,3 +66,41 @@ test('on a short viewport the content never overlaps the header or footer; the p
   const scrollable = await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight)
   expect(scrollable).toBe(true)
 })
+
+/** Selects a format and, for the configurable ones, its maximum length or word count. */
+async function chooseLargest(page: Page, label: string) {
+  if (label !== 'Password') await chooseFormat(page, label)
+  const slider =
+    label === 'Custom Password'
+      ? page.getByRole('slider', { name: 'Password length' })
+      : label === 'Memorable'
+        ? page.getByRole('slider', { name: 'Words' })
+        : null
+  if (slider) {
+    await slider.focus()
+    await slider.press('End')
+  }
+  await expect(page.getByTestId('secret')).not.toBeEmpty()
+}
+
+for (const label of ['Password', 'Custom Password', 'Memorable']) {
+  test(`${label} at its largest is vertically centred on a tall desktop viewport`, async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 1200 })
+    await page.goto('/')
+    await chooseLargest(page, label)
+    const { above, below } = await gaps(page)
+    expect(above).toBeGreaterThan(40)
+    expect(Math.abs(above - below)).toBeLessThanOrEqual(1)
+  })
+
+  test(`${label} at its largest never overlaps the header or footer on a short viewport`, async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 400 })
+    await page.goto('/')
+    await chooseLargest(page, label)
+    const { above, below } = await gaps(page)
+    expect(above).toBeGreaterThanOrEqual(0)
+    expect(below).toBeGreaterThanOrEqual(0)
+    const scrollable = await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight)
+    expect(scrollable).toBe(true)
+  })
+}

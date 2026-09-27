@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "alphabets": {
     "standardLower": "abcdefghijkmnopqrstuvwxyz",
     "standardUpper": "ABCDEFGHJKLMNPQRSTUVWXYZ",
@@ -14,12 +14,74 @@
   "entropy": {
     "standard": { "bits": 90.144, "display": "90.1" },
     "strong": { "bits": 149.4916, "display": "~149" },
-    "memorable": { "bits": 58.3431, "display": "58.3" },
+    "memorable": { "bits": 87.5147, "display": "87.5" },
     "pin4": { "bits": 13.2877, "display": "13.3" },
     "pin6": { "bits": 19.9316, "display": "19.9" },
     "pin8": { "bits": 26.5754, "display": "26.6" },
     "secret128": { "bits": 128, "display": "128" },
     "secret256": { "bits": 256, "display": "256" }
+  },
+  "custom": {
+    "minLength": 6,
+    "maxLength": 32,
+    "defaultLength": 24,
+    "defaultIncludeSymbols": true,
+    "cases": [
+      { "length": 6, "includeSymbols": true, "bits": 37.3729, "display": "~37" },
+      { "length": 6, "includeSymbols": false, "bits": 35.7252, "display": "~35" },
+      { "length": 24, "includeSymbols": true, "bits": 149.4916, "display": "~149" },
+      { "length": 24, "includeSymbols": false, "bits": 142.9007, "display": "~142" },
+      { "length": 32, "includeSymbols": true, "bits": 199.3222, "display": "~199" },
+      { "length": 32, "includeSymbols": false, "bits": 190.5343, "display": "~190" }
+    ]
+  },
+  "memorable": {
+    "minWordCount": 4,
+    "maxWordCount": 8,
+    "defaultWordCount": 6,
+    "suffixDigits": 3,
+    "capitalizeFirst": true,
+    "defaultSeparator": "-",
+    "separators": [" ", "-", "_"],
+    "cases": [
+      { "wordCount": 4, "bits": 61.665, "display": "61.7" },
+      { "wordCount": 5, "bits": 74.5898, "display": "74.6" },
+      { "wordCount": 6, "bits": 87.5147, "display": "87.5" },
+      { "wordCount": 7, "bits": 100.4395, "display": "100.4" },
+      { "wordCount": 8, "bits": 113.3643, "display": "113.4" }
+    ],
+    "formattingCases": [
+      {
+        "wordIndices": [2008, 2527, 6639, 7747],
+        "suffix": 0,
+        "separator": "_",
+        "expected": "Drop-down_Felt-tip_T-shirt_Yo-yo_000"
+      },
+      {
+        "wordIndices": [0, 0, 0, 0, 0, 0],
+        "suffix": 7,
+        "separator": "-",
+        "expected": "Abacus-Abacus-Abacus-Abacus-Abacus-Abacus-007"
+      },
+      {
+        "wordIndices": [0, 1, 1234, 0, 7775],
+        "suffix": 42,
+        "separator": " ",
+        "expected": "Abacus Abdomen Cone Abacus Zoom 042"
+      },
+      {
+        "wordIndices": [7747, 2008, 6639, 2527, 1, 0, 1234, 7775],
+        "suffix": 999,
+        "separator": " ",
+        "expected": "Yo-yo Drop-down T-shirt Felt-tip Abdomen Abacus Cone Zoom 999"
+      },
+      {
+        "wordIndices": [2008, 2008, 2527, 6639, 7747, 7775, 0],
+        "suffix": 42,
+        "separator": "-",
+        "expected": "Drop-down-Drop-down-Felt-tip-T-shirt-Yo-yo-Zoom-Abacus-042"
+      }
+    ]
   },
   "wordlist": {
     "count": 7776,

@@ -34,11 +34,11 @@ afterEach(() => {
 })
 
 describe('GeneratorCard', () => {
-  it('shows a Standard password and its entropy on load', () => {
+  it('shows a Password and its entropy on load', () => {
     setup()
     expect(secret()).toMatch(/^[^-]{6}-[^-]{6}-[^-]{6}$/)
     expect(screen.getByText('90.1 bits of entropy')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Format: Standard' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Format: Password' })).toBeInTheDocument()
   })
 
   it('switches format from the menu and remembers it', async () => {
@@ -57,7 +57,7 @@ describe('GeneratorCard', () => {
     expect(secret()).toMatch(/^\d{6}$/)
     await user.click(screen.getByRole('radio', { name: '8 digits' }))
     expect(secret()).toMatch(/^\d{8}$/)
-    await chooseFormat(user, 'Standard')
+    await chooseFormat(user, 'Password')
     expect(screen.queryByRole('radiogroup', { name: 'PIN length' })).not.toBeInTheDocument()
   })
 
@@ -129,7 +129,7 @@ describe('GeneratorCard', () => {
       const item = screen.getByRole('menuitem', { name: label })
       const icon = item.querySelector('[data-slot="icon"]')
       expect(icon).not.toBeNull()
-      if (label === 'Standard') {
+      if (label === 'Password') {
         expect(icon).not.toHaveClass('invisible')
       } else {
         expect(icon).toHaveClass('invisible')

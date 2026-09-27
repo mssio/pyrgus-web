@@ -1,6 +1,8 @@
 import { usePyrgus } from '../hooks/usePyrgus'
 import { Button } from './catalyst/button'
+import { CustomPasswordControl } from './CustomPasswordControl'
 import { FormatPicker } from './FormatPicker'
+import { MemorableControl } from './MemorableControl'
 import { PinLengthControl } from './PinLengthControl'
 import { SecretDisplay } from './SecretDisplay'
 
@@ -19,6 +21,22 @@ export function GeneratorCard() {
           <FormatPicker value={p.format} onChange={p.setFormat} />
           {p.format === 'pin' ? <PinLengthControl value={p.pinLength} onChange={p.setPinLength} /> : null}
         </div>
+        {p.format === 'strong' ? (
+          <CustomPasswordControl
+            length={p.customLength}
+            includeSymbols={p.includeSymbols}
+            onLengthChange={p.setCustomLength}
+            onIncludeSymbolsChange={p.setIncludeSymbols}
+          />
+        ) : null}
+        {p.format === 'memorable' ? (
+          <MemorableControl
+            wordCount={p.memorableWordCount}
+            separator={p.memorableSeparator}
+            onWordCountChange={p.setMemorableWordCount}
+            onSeparatorChange={p.setMemorableSeparator}
+          />
+        ) : null}
 
         {p.password === null ? (
           <p role="alert" className="mt-6 text-sm/6 font-medium text-red-600 dark:text-red-400">

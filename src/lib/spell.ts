@@ -1,4 +1,5 @@
 const NAMES: Record<string, string> = {
+  ' ': 'space',
   '-': 'dash',
   '!': 'exclamation mark',
   '@': 'at',

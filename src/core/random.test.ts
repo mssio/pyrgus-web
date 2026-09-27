@@ -63,6 +63,13 @@ describe('randomInt', () => {
     expect(rng.consumed).toBe(3)
   })
 
+  it('rejects the biased suffix range for n = 1000', () => {
+    // 2^32 mod 1000 = 296, so the limit is 4294967000; that value and above are redrawn.
+    const rng = new ScriptedRandom([4294967000, 0xffffffff, 4294966999])
+    expect(randomInt(rng, 1000)).toBe(999)
+    expect(rng.consumed).toBe(3)
+  })
+
   it('returns 0 for n = 1 using a single draw', () => {
     const rng = new ScriptedRandom([0xffffffff])
     expect(randomInt(rng, 1)).toBe(0)
@@ -76,6 +83,7 @@ describe('randomInt', () => {
   it.each([
     [3, 100_000],
     [100, 100_000],
+    [1000, 100_000],
     [7776, 200_000],
   ])('is uniform for n = %i', (n, samples) => {
     const rng = new SeededRandom(n)

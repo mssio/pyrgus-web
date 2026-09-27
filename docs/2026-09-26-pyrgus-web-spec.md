@@ -37,7 +37,10 @@ Vercel Analytics). `/generate` redirects to `/`.
 - Analytics, telemetry, or third-party scripts of any kind.
 - Service worker / offline install (PWA).
 - A dark-mode toggle (the site follows the system setting).
-- Free-form format customization. PIN length (4/6/8) is the only option.
+- Free-form format customization. The only options are PIN length (4/6/8), Custom Password's length
+  (6–32) and Include symbols, and Memorable's word count (4–8) and separator (space, `-`, `_`).
+  Further character-class toggles, editable alphabets, grouping, numeric length fields, configurable
+  capitalization or suffix length are out of scope.
 
 ## Key decisions
 
@@ -91,13 +94,15 @@ and shoulder-surfing. The page cannot defend against these.
 
 ## Formats
 
-Six formats. Standard is the default.
+Six formats. Password is the default. Internal IDs (`standard`, `strong`, `memorable`, `pin`,
+`secret128`, `secret256`) are unchanged from the first release and are what `localStorage` stores;
+the table uses the visible names.
 
 | Format | Length | Base set | Required (at least one each) | Grouping | Entropy |
 |---|---|---|---|---|---|
-| **Standard** | 18 | `a–z` less `l` (25) | `A–Z` less `O,I` (24) · `2–9` (8) | 6-6-6, `-` | 90.1 bits |
-| **Strong** | 24 | `a–zA–Z0–9!@#$%^&*-_=+?` (75) | one of each of the 4 classes | none | ~149 bits |
-| **Memorable** | 4 words + 2 digits | EFF long wordlist (7,776) | — | joined by `-` | 58.3 bits |
+| **Password** (`standard`) | 18 | `a–z` less `l` (25) | `A–Z` less `O,I` (24) · `2–9` (8) | 6-6-6, `-` | 90.1 bits |
+| **Custom Password** (`strong`) | 6–32 (default 24) | `a–zA–Z0–9!@#$%^&*-_=+?` (75), or `a–zA–Z0–9` (62) without symbols | lowercase, uppercase, digit, and a symbol when symbols are on | none | ~35 to ~199 bits (default ~149) |
+| **Memorable** | 4–8 words (default 6) + 3 digits | EFF long wordlist (7,776) | — | joined by space, `-` or `_` (default `-`) | 61.7 to 113.4 bits (default 87.5) |
 | **PIN** | 4, 6 or 8 (default 6) | `0–9` | none | none | 13.3 / 19.9 / 26.6 bits |
 | **Secret 128** | 32 | lowercase hex of 16 random bytes | — | none | 128 bits exactly |
 | **Secret 256** | 64 | lowercase hex of 32 random bytes | — | none | 256 bits exactly |
@@ -105,22 +110,34 @@ Six formats. Standard is the default.
 Samples:
 
 ```
-Standard    khduvn-xeRvpr-mzt7ai
-Strong      k7$Rm2xPq!vLz9Wn#tBc4eYh
-Memorable   vivid-cobra-mango-42     (suffix 00–99, zero-padded)
-PIN         478210
-Secret 128  a3f81c07d9b42e6f5081cc3a7be2149d
-Secret 256  a3f81c07d9b42e6f5081cc3a7be2149d4c7e0b93af15d8206ee9713b5c0da864
+Password         khduvn-xeRvpr-mzt7ai
+Custom Password  k7$Rm2xPq!vLz9Wn#tBc4eYh                 (default: 24 characters, symbols on)
+Memorable        Velvet-Lantern-Mango-Drop-down-Lake-042  (default: six words, hyphen; suffix 000–999)
+PIN              478210
+Secret 128       a3f81c07d9b42e6f5081cc3a7be2149d
+Secret 256       a3f81c07d9b42e6f5081cc3a7be2149d4c7e0b93af15d8206ee9713b5c0da864
 ```
 
-**Standard exclusions.** `l` is dropped from lowercase, `O` and `I` from uppercase, and `0` and `1`
+**Password exclusions.** `l` is dropped from lowercase, `O` and `I` from uppercase, and `0` and `1`
 from digits. `5/S`, `8/B` and `2/Z` are kept: they are distinguishable in the monospaced face used.
-Because Standard's base set is disjoint from its required sets, the uppercase letter and the digit
+Because Password's base set is disjoint from its required sets, the uppercase letter and the digit
 each appear **exactly** once.
 
-**Strong symbols.** `!@#$%^&*-_=+?` (13). Quotes, backslash and backtick are excluded so values
-survive shell, CSV and JSON without escaping. The base set overlaps the required sets, so each class
-appears **at least** once.
+**Custom Password.** An integer length from 6 through 32 (default 24) and an Include symbols
+setting (default on). With symbols on, the base set is the 75 characters above and lowercase,
+uppercase, digit and symbol each appear **at least** once; with symbols off, the base set is the 62
+letters and digits, three classes are required, and no symbol can appear. Both modes use every ASCII
+letter and digit, including look-alikes; only Password excludes them. There is no grouping, so the
+selected length is the exact output length. Symbols are `!@#$%^&*-_=+?` (13). Quotes, backslash and
+backtick are excluded so values survive shell, CSV and JSON without escaping. The lower limit of 6
+is a deliberate user choice; its entropy is reported, not judged.
+
+**Memorable.** An integer count of 4 through 8 EFF entries (default 6), each drawn independently
+(repeats are allowed). Each entry's first letter is uppercased and the rest is left unchanged, so the
+four entries with their own hyphens become `Drop-down`, `Felt-tip`, `T-shirt` and `Yo-yo` and count
+as one word each. A three-digit suffix from `000` to `999` (zero-padded) follows. Entries and suffix
+are joined by the selected separator — a single ASCII space (U+0020), `-` or `_`, default `-` — with
+none at either end; the separator never changes an entry's own hyphens.
 
 **Secret formats.** No grouping, no separators: they are pasted into config files and key fields,
 where an inserted dash would corrupt the value.
@@ -131,7 +148,7 @@ of the 20 most common PINs with probability 0.2%. Filtering would break the exac
 the uniformity tests for negligible gain. Do not "fix" this.
 
 **Deviation from 2.0.** The 2.0 site's default can emit `l O I 0 1` and has a position bias (see
-Generation). Pyrgus Web's Standard format fixes both. This is intentional, not a regression.
+Generation). Pyrgus Web's Password format fixes both. This is intentional, not a regression.
 
 ## Randomness — `src/core/random.ts`
 
@@ -182,23 +199,38 @@ src/core/
 ```ts
 type CharacterSpec = { kind: 'chars'; length: number; base: string; required: string[];
                        groupSize?: number; separator?: string }
-type WordSpec      = { kind: 'words'; wordCount: 4; suffixDigits: 2; separator: '-' }
+type WordSpec      = { kind: 'words'; wordCount: number; suffixDigits: 3;
+                       separator: MemorableSeparator; capitalizeFirst: true }
 type HexSpec       = { kind: 'hex'; byteCount: 16 | 32 }
 
 export type FormatId = 'standard' | 'strong' | 'memorable' | 'pin' | 'secret128' | 'secret256'
 export type PinLength = 4 | 6 | 8
-export type Options = { pinLength: PinLength }
+export type MemorableSeparator = ' ' | '-' | '_'
+export type Options = { pinLength: PinLength; customLength: number; includeSymbols: boolean;
+                        memorableWordCount: number; memorableSeparator: MemorableSeparator }
 
+export const DEFAULT_OPTIONS: Options = { pinLength: 6, customLength: 24, includeSymbols: true,
+                                          memorableWordCount: 6, memorableSeparator: '-' }
+
+export function formatSpec(id: FormatId, options: Options): FormatSpec
 export function generate(id: FormatId, options: Options, rng?: RandomSource): string
 export function entropyBits(id: FormatId, options: Options): number
+export function formatEntropy(id: FormatId, options: Options): string
 ```
 
-`rng` defaults to `secureRandom`. Only the PIN spec reads `options`: its `length` is
-`options.pinLength`. Adding a seventh preset is a table entry, not a new code path.
+`rng` defaults to `secureRandom`. Callers always pass complete options, typically by spreading
+`DEFAULT_OPTIONS`. Each spec reads only its own fields: PIN reads `pinLength`; Custom Password
+(`strong`) reads `customLength` and `includeSymbols`; Memorable reads `memorableWordCount` and
+`memorableSeparator`. The other formats read none, and unrelated fields — even invalid ones — never
+change a format's spec, entropy or output. The reading spec validates its fields and throws a
+`RangeError`, before any random draw or entropy calculation, for a length outside 6–32, a word count
+outside 4–8, a non-integer or non-finite number, a non-boolean symbol setting or any separator other
+than the three allowed strings. Values are never clamped or coerced. Adding a seventh preset is a
+table entry, not a new code path.
 
 ### Generation
 
-**Character formats (Standard, Strong, PIN):**
+**Character formats (Password, Custom Password, PIN):**
 
 1. Fill `length` positions with characters drawn from `base`.
 2. Shuffle the position indices; take the first *k*, one per required set.
@@ -208,38 +240,54 @@ export function entropyBits(id: FormatId, options: Options): number
 Step 2 is the fix for 2.0's position bias. 2.0 resolved an uppercase/digit collision with
 `digitIndex = (digitIndex + 1) % 18`, making one position twice as likely and another impossible.
 
-**Memorable:** four words chosen with `randomInt(rng, 7776)`, then a suffix `randomInt(rng, 100)`
-zero-padded to two digits, all joined with `-`.
+**Memorable:** `wordCount` entries chosen independently with `randomInt(rng, 7776)`, each with its
+first letter uppercased, then a suffix `randomInt(rng, 1000)` zero-padded to three digits, all joined
+with the selected separator.
 
 **Hex formats:** `randomBytes(rng, byteCount)`, hex-encoded lowercase. No alphabet sampling, so the
 "128 bits" claim is self-evident to an auditor.
 
 ### Entropy
 
-Reported as log2 of the number of distinct strings the generator can produce, **computed from the
-spec data**, not hard-coded:
+**Computed from the spec data**, not hard-coded. Every figure except Custom Password's is exact:
+log2 of the number of equally likely strings the generator can produce.
 
-- **Standard:** `18 × 24 × 17 × 8 × 25^16` → 90.1 bits. Exact and uniform.
-- **Strong:** `24 × log2(75)` → 149.5, displayed as 149. Approximate: the overlap between base and
-  required sets makes the distribution slightly non-uniform, so true entropy is marginally lower.
-- **Memorable:** `7776^4 × 100` → 58.3 bits.
+- **Password:** `18 × 24 × 17 × 8 × 25^16` → 90.1 bits. Exact and uniform.
+- **Custom Password:** `customLength × log2(75)` with symbols, `customLength × log2(62)` without —
+  `~149` at the default 24 with symbols, from `~35` (6, no symbols) to `~199` (32, symbols). These are
+  approximate upper bounds, not exact entropy or the log of the valid output count: the required
+  classes overlap the base set, so the output is non-uniform and true entropy is lower, by an amount
+  that grows at short lengths.
+- **Memorable:** `wordCount × log2(7776) + log2(1000)` → 61.7 / 74.6 / 87.5 / 100.4 / 113.4 bits for
+  4 / 5 / 6 / 7 / 8 words (default 87.5). Exact. Capitalization is deterministic and the separator is
+  chosen by the user, so neither adds entropy; capitalized entry starts keep distinct word sequences
+  from producing the same string.
 - **PIN:** `10^n` → 13.3 / 19.9 / 26.6 bits for 4 / 6 / 8.
 - **Secret 128 / 256:** 128 / 256 bits exactly.
 
-Display rules: exact figures show one decimal place (`90.1`, `58.3`, `13.3`, `19.9`, `26.6`);
-Secret 128 / 256 show `128` / `256`; Strong, being approximate, shows `~149` (rounded down).
+Display rules: exact figures show one decimal place (`90.1`, `87.5`, `13.3`, `19.9`, `26.6`);
+Secret 128 / 256 show `128` / `256`; Custom Password, being approximate, shows `~` and the figure
+rounded down (`~149`).
 
 ### Wordlist
 
 The EFF long wordlist (7,776 words, CC BY 3.0 US), converted from EFF's `.txt` into a checked-in
 TypeScript module and **bundled in the main chunk** (~22 KB gzipped). Four entries contain a hyphen
-(`drop-down`, `felt-tip`, `t-shirt`, `yo-yo`); they are kept, as in the original list. Lazy loading was rejected: it
+(`drop-down`, `felt-tip`, `t-shirt`, `yo-yo`); they are kept, as in the original list, in its
+original order. Lazy loading was rejected: it
 would make `generate()` async and add a loading state for Memorable. A test verifies the SHA-256 of
 the source list against EFF's published file.
 
 ### Cross-platform test vectors
 
-`src/core/test-vectors.json` records the alphabets, entropy figures and wordlist SHA-256. It lives
+`src/core/test-vectors.json` (version 2) records the alphabets, entropy figures (Memorable's default
+is now 87.5147 / `87.5`) and wordlist SHA-256. A `custom` object records the 6–32 range, the 24/on
+defaults and six entropy cases (lengths 6, 24, 32 with symbols on and off); a `memorable` object
+records the 4–8 range, default six words, three suffix digits, first-letter capitalization, the three
+separators with hyphen as default, entropy for all five word counts, and `formattingCases` — word
+indices, suffix, separator and exact expected output, covering every separator, suffixes 000/007/
+042/999, repeated entries and all four hyphenated entries — that tests feed through a scripted
+random source. It lives
 under `src/` so the existing `tsconfig.app.json` covers the tests that import it
 (`resolveJsonModule` enabled). The native app keeps a copy in its own repo; a test on each side
 compares against its copy, so any divergence shows up as a failing test when the files are synced.
@@ -263,32 +311,59 @@ card padding (2rem from 640 px). It is centred vertically in the space between h
 when the viewport is shorter than the content, the page scrolls. Top to bottom:
 
 1. **Format picker.** Catalyst `Dropdown` with `DropdownSection`/`DropdownHeading`: **Passwords**
-   (Standard, Strong, Memorable, PIN) and **Secrets** (Secret 128, Secret 256). The button shows the
+   (Password, Custom Password, Memorable, PIN) and **Secrets** (Secret 128, Secret 256). The button shows the
    current format name. (`Dropdown` rather than `Listbox` because Catalyst's `Listbox` has no section
    headings.) Every item renders the check icon; it is hidden (`invisible`) rather than omitted when
    not selected, so item labels stay aligned within each section.
 2. **PIN length.** A segmented `4 · 6 · 8` control built on Headless UI `RadioGroup`, rendered only
-   when PIN is selected.
-3. **The secret.** Large monospaced text (24 px; 30 px from 640 px), digits highlighted in indigo
+   when PIN is selected, in the picker row.
+3. **Format options** (`CustomPasswordControl.tsx`, `MemorableControl.tsx`), below the picker row and
+   above the secret, in normal flow with no fixed height; rendered only for their format, and kept
+   in the error state:
+   - **Custom Password:** a visible `Length: 24` label (the number follows state) over a full-width
+     native `<input type="range">` (`min` 6, `max` 32, `step` 1) with endpoint captions 6 and 32,
+     accessible name "Password length" and value text "`<n>` characters"; then "Include symbols"
+     with a Headless UI `Switch` whose thumb position, not just its color, shows the state.
+   - **Memorable:** a visible `Words: 6` label over a native range (`min` 4, `max` 8, `step` 1, endpoint
+     captions 4 and 8, name "Words", value text "`<n>` words"); then "Separator" and a Headless UI
+     `RadioGroup` named "Separator" with Space, Hyphen (-) and Underscore (_), in the PIN control's
+     segmented style — one column below 640 px so the labels never overflow, three from 640 px.
+   The native ranges own their keyboard behavior (arrows, Home/End); Space toggles the switch; arrows
+   move through the separators. Nothing intercepts those keys, and regeneration never moves focus.
+4. **The secret.** Large monospaced text (24 px; 30 px from 640 px), digits highlighted in indigo
    (all formats, including hex).
    Click to copy. **It wraps and never truncates** (`overflow-wrap: anywhere`, no line clamp, no
-   ellipsis): a truncated secret that looks complete is a correctness bug.
-4. **Entropy caption:** e.g. "90.1 bits of entropy". No strength adjective, no color judgment.
-5. **Buttons:** **Copy** (primary; shows "Copied ✓" for 2 s) and **Regenerate** (secondary).
+   ellipsis): a truncated secret that looks complete is a correctness bug. `white-space: pre-wrap`
+   keeps a Memorable space separator exactly; soft wrapping adds no characters, and Copy writes the
+   exact state string with no trimming or separator replacement.
+5. **Entropy caption:** e.g. "90.1 bits of entropy". No strength adjective, no color judgment.
+6. **Buttons:** **Copy** (primary; shows "Copied ✓" for 2 s) and **Regenerate** (secondary).
    Below them, the caption "Clipboard clears in 90s while this tab is open."
-6. **App pill:** a button, "Pyrgus for iPhone, iPad & Mac — coming soon", that opens the apps dialog.
+7. **App pill:** a button, "Pyrgus for iPhone, iPad & Mac — coming soon", that opens the apps dialog.
 
 ### State — `usePyrgus()`
 
-One hook owns `format`, `pinLength`, `password`, `copied` and `error`, and exposes `setFormat`,
-`setPinLength`, `regenerate()` and `copy()`. Components are presentational.
+One hook owns `format`, `pinLength`, `customLength`, `includeSymbols`, `memorableWordCount`,
+`memorableSeparator`, `password`, `copied` and `error`, and exposes `setFormat`, `setPinLength`,
+`setCustomLength`, `setIncludeSymbols`, `setMemorableWordCount`, `setMemorableSeparator`,
+`regenerate()` and `copy()`. Components are presentational.
 
-- A password is generated on mount and whenever `format` or `pinLength` changes.
+- A password is generated on mount and whenever `format`, `pinLength` or a Custom Password or
+  Memorable option changes. Generation and the entropy caption always receive the same complete
+  options object, built from the next values, never from stale state.
+- An option setter called with its current value is a no-op: no regeneration, no announcement.
+- `customLength` (24), `includeSymbols` (on), `memorableWordCount` (6) and `memorableSeparator`
+  (`-`) live in page state only. They survive switching to another format and back, and reset to
+  their defaults on reload, even when the saved format is Custom Password or Memorable. They are
+  never read from or written to storage.
+- A generation error after any change clears the password and shows the error state, never a stale
+  secret beside new option values.
 - `format` and `pinLength` persist in `localStorage` (keys `pyrgus.format`, `pyrgus.pinLength`).
-  Reads are validated; anything missing, invalid or throwing falls back to `standard` / `6`.
+  Reads are validated; anything missing, invalid or throwing falls back to `standard` / `6`. Stored `standard`, `strong` and
+  `memorable` from before the rename remain valid and display their new names; no migration is needed.
 - **The password is never persisted.**
 - A version counter ignores stale copy feedback: if a copy resolves after a newer copy, a
-  regenerate, or a format/PIN change, it never updates `copied`/`copyFailed`. This does not cancel
+  regenerate, or a format, PIN or Custom Password/Memorable option change, it never updates `copied`/`copyFailed`. This does not cancel
   the clipboard's own 90 s clear of a secret already copied — see Clipboard.
 
 ### Clipboard
@@ -303,8 +378,8 @@ One hook owns `format`, `pinLength`, `password`, `copied` and `error`, and expos
 - A newer copy supersedes the previous pending clear once its write succeeds, and invalidates any
   in-flight write or read from an older copy, so a slow clipboard operation cannot resurrect a stale
   clear. If the newer write fails, the previous secret's clear is kept, or re-armed for its remaining
-  time if it had already been superseded. Regenerating or switching format/PIN length does not itself
-  cancel the clear already scheduled for a secret the user copied before that change.
+  time if it had already been superseded. Regenerating or changing format, PIN length or a Custom
+  Password/Memorable option does not itself cancel the clear already scheduled for a secret the user copied before that change.
 - If `writeText` fails (permission denied, unsupported browser), the button does **not** show
   "Copied"; the caption is replaced by "Couldn't copy. Select the password and copy it manually." The
   visible value is `select-all`, so one click selects it.
@@ -312,12 +387,14 @@ One hook owns `format`, `pinLength`, `password`, `copied` and `error`, and expos
 ### Accessibility
 
 - The secret is spelled out character by character, announcing case and separators
-  ("k, h, d, u, v, n, dash, x, e, capital R, …"), in an `sr-only` element next to the visible value;
+  ("k, h, d, u, v, n, dash, x, e, capital R, …"; a Memorable space is spoken as "space"), in an
+  `sr-only` element next to the visible value;
   the visible value is `aria-hidden`. (`aria-label` is not permitted on a paragraph, and a hidden
   sibling keeps the spelled text out of a manual text selection.) Both the visible value and its
   spelled form are marked `translate="no"`, so browser page translation does not send the secret to
   the vendor's translation service and does not rewrite a Memorable passphrase's words.
-- A polite live region announces "Copied" and "New password generated". Setting the same text twice
+- A polite live region announces "Copied" and "New password generated" — never the secret itself,
+  including after a Custom Password or Memorable option change. Setting the same text twice
   in a row still produces a distinct announcement (each is its own DOM node), so screen readers
   re-announce a repeat.
 - Full keyboard operation with visible focus rings. WCAG AA contrast in both themes.
@@ -325,7 +402,8 @@ One hook owns `format`, `pinLength`, `password`, `copied` and `error`, and expos
 ### Error state
 
 If secure randomness is unavailable, the card shows: "Your browser can't provide secure randomness,
-so Pyrgus won't generate a password." Copy and Regenerate are disabled.
+so Pyrgus won't generate a password." Copy and Regenerate are disabled. The format picker and the
+selected format's controls stay visible and usable; a change stays fail-closed.
 
 ### Apps dialog
 
@@ -534,10 +612,12 @@ evaluating or contributing to the project. Contents:
 2. **How it keeps your secret safe** — short, checkable claims, each pointing at the code or config
    that proves it: generated with `crypto.getRandomValues` (`src/core/random.ts`); unbiased selection
    by rejection sampling; the page cannot make network requests (`connect-src 'none'` in
-   `vercel.json`); no analytics or third-party scripts; nothing stored except the format preference.
+   `vercel.json`); no analytics or third-party scripts; nothing stored except the format and PIN
+   length — Custom Password and Memorable options reset on reload.
    Plus the stated limitations: clipboard clearing depends on the browser; JS strings cannot be wiped
    from memory; a compromised browser or extension is out of scope.
-3. **Formats** — the six-format table with entropy, and one line on the Standard exclusions.
+3. **Formats** — the six-format table with entropy, one line on the Password exclusions, and the
+   Custom Password and Memorable options with their defaults and ranges.
 4. **Development** — prerequisites (Node 24 LTS, from `.nvmrc`), `npm ci`, the scripts, the note
    that the CSP is enforced in `preview`, not `dev`, and a "Specs and plans" paragraph: the naming
    scheme, the binding spec, and a pointer to `AGENTS.md`.
@@ -582,6 +662,8 @@ pyrgus-web/
 │   │   ├── GeneratorCard.tsx
 │   │   ├── FormatPicker.tsx
 │   │   ├── PinLengthControl.tsx
+│   │   ├── CustomPasswordControl.tsx  length slider and Include symbols switch
+│   │   ├── MemorableControl.tsx       word-count slider and separator radio group
 │   │   ├── SecretDisplay.tsx
 │   │   ├── AppsDialog.tsx
 │   │   ├── WidgetMockup.tsx
@@ -595,7 +677,7 @@ pyrgus-web/
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── index.css
-├── e2e/                     Playwright smoke test
+├── e2e/                     Playwright: smoke, layout, password options, build output
 ├── index.html
 ├── vercel.json
 ├── vite.config.ts
@@ -620,29 +702,56 @@ Tests are colocated with the code they test (`*.test.ts` / `*.test.tsx`); Playwr
 ### Core unit tests (Vitest, Node)
 
 - **Shape:** for each format and each PIN length — exact length, grouping and separator placement,
-  required classes present. Standard's uppercase and digit appear exactly once; Strong's four classes
-  at least once; PIN is digits only.
-- **Exclusions:** Standard never emits `l O I 0 1`.
+  required classes present. Password's uppercase and digit appear exactly once; PIN is digits only.
+- **Custom Password:** every length 6–32 with symbols on and off — exact length, the 75- or
+  62-character alphabet, every required class, and no symbol when off.
+- **Memorable:** every word count 4–8 with every separator — scripted draws pin exact output for
+  suffixes 000/007/042/999, repeated entries and all four hyphenated entries, with `count + 1` draws;
+  seeded samples check capitalized entries from the list, joins and the suffix. Words are never
+  counted by splitting on `-`.
+- **Option validation:** invalid lengths, symbol settings, word counts and separators throw
+  `RangeError` from `formatSpec`, `generate` and `entropyBits` with zero draws; unrelated (even
+  invalid) fields never change another format's spec, entropy or output.
+- **Exclusions:** Password never emits `l O I 0 1`.
 - **Hex:** 32 / 64 characters from `0-9a-f` only, no separators, no uppercase.
 - **Determinism:** a seeded source produces identical output across runs.
-- **Uniformity (chi-squared, ~100,000 samples):** Standard uppercase and digit positions are flat,
+- **Uniformity (chi-squared, ~100,000 samples):** Password uppercase and digit positions are flat,
   and so is the **offset between them** (digit position − uppercase position, mod 18); hex nibble
-  frequencies are flat; PIN digits are flat per position; `randomInt` is flat for n = 3, 100 and
-  7776. 2.0's collision rule leaves each position's marginal frequency uniform, so only the offset
-  test detects it — a test runs 2.0's algorithm and asserts the offset test rejects it.
+  frequencies are flat; PIN digits are flat per position; `randomInt` is flat for n = 3, 100, 1000
+  (the Memorable suffix) and 7776. 2.0's collision rule leaves each position's marginal frequency
+  uniform, so only the offset test detects it — a test runs 2.0's algorithm and asserts the offset test rejects it.
 - **Rejection sampling:** an injected source emitting values in the rejection zone proves they are
   redrawn, not reduced.
 - **Fail-closed:** with `crypto` missing or `getRandomValues` throwing, `SecureRandom` throws.
 - **Wordlist:** exactly 7,776 entries, unique, lowercase ASCII; SHA-256 matches EFF's file.
-- **Entropy:** values match the formulas and `src/core/test-vectors.json`.
+- **Entropy:** values match the formulas and `src/core/test-vectors.json`: all 54 Custom Password
+  combinations (`~` and rounded down, never exact) and every Memorable count and separator (exact);
+  the vector file's version, metadata and formatting cases are checked, the latter through the
+  generator.
 - **Header config:** parses `vercel.json` and asserts every directive listed under Hosting.
 
 ### Component tests (Vitest + jsdom + Testing Library)
 
 - Picker switches formats; the PIN control appears only for PIN; changing PIN length regenerates.
+- `GeneratorCard.options.test.tsx`: Custom Password and Memorable controls appear only for their
+  format with the default values, bounds, names and value text; every option regenerates and updates
+  the entropy; settings survive switching away and back; all three separators join correctly, with a
+  scripted fixture proving internal hyphens and a space-separated result render, speak and copy
+  exactly; a change clears Copied and copy-failed feedback; a same-value event neither regenerates
+  nor re-announces; the live region never contains the secret.
+- With generation failing, a saved Custom Password or Memorable selection keeps its controls usable
+  and stays fail-closed after a change. `spell` names spaces.
 - Copy calls `navigator.clipboard.writeText`; "Copied" appears then clears.
-- Persisted settings restore; invalid stored values fall back to defaults; the password is never
-  written to `localStorage`.
+- Persisted settings restore, including saved `standard`, `strong` and `memorable`; invalid stored
+  values fall back to defaults; the password is never written to `localStorage`.
+- Hook (`usePyrgus.test.ts`): each option setter regenerates with the complete next options (checked
+  through a pass-through spy on `generate`), refreshes entropy, clears copy feedback and announces
+  once; a no-op call does nothing; options survive format switches and reset on remount; only
+  `pyrgus.format` and `pyrgus.pinLength` are ever written, and generation works with storage
+  throwing. A delayed copy that resolves or rejects after an option change leaves the new password's
+  feedback alone; the 90 s clear of a secret copied before the change still fires; a generation
+  failure after a change (following a successful or failed copy) fails closed, and the next change
+  recovers.
 - Clipboard clear runs only when focus and value match; a newer copy cancels the older timer.
 - Error state renders when randomness is unavailable.
 - The apps pill opens a dialog named "Pyrgus is coming to iPhone, iPad & Mac"; Escape and Close
@@ -667,7 +776,18 @@ production share one source:
 - **Layout** (`e2e/layout.spec.ts`): the generator is vertically centred between header and footer
   at 1280 × 900; it is 32rem wide with a 30 px secret from 640 px and unchanged at 320 px; Secret 256
   wraps without overflow at 640 px; at 1280 × 400 the content never overlaps the header or footer and
-  the page scrolls.
+  the page scrolls. Password, Custom Password at 32
+  characters and Memorable at eight words are centred at 1280 × 1200 and never overlap the header or
+  footer at 1280 × 400.
+- **Password options** (`e2e/password-options.spec.ts`), with zero CSP/Trusted Types violations or
+  console errors: both sliders by keyboard (Home, arrows, End) with value, value text, output length
+  and focus checked each step; Space toggles symbols; arrows select every separator, with exact joins
+  and focus kept; Copy returns the exact result, including a space-separated one and its three-digit
+  suffix. Options survive format switches and reset on reload while the saved format restores; only
+  `pyrgus.format` and `pyrgus.pinLength` are stored. At 320 × 640, eight of the longest EFF entry
+  (a test-only `getRandomValues` override injected over DevTools) in every separator, and a
+  32-character Custom Password, show no horizontal overflow or clipping, every control and Copy can
+  be scrolled fully into view, and the copied string matches.
 
 Redirect behavior (`/generate` → `/`) is verified against the Vercel preview deploy, since only
 Vercel applies `vercel.json` redirects.
@@ -681,7 +801,8 @@ On pull requests and pushes to `main`: `npm ci` → `npm run lint` → `npm run 
 
 - securityheaders.com A+ and Mozilla Observatory A+.
 - Lighthouse: 100 for Accessibility and Best Practices.
-- VoiceOver read-through of a Standard password.
+- VoiceOver read-through of a Password, the Custom Password and Memorable controls, and a
+  space-separated Memorable result (spaces spoken).
 - Clipboard clear in Safari, Chrome and Firefox (Safari expected not to clear — documented).
 
 ## Deployment and cutover
@@ -699,6 +820,11 @@ The PIN length option (4 / 6 / 8, default 6) was introduced with this spec and h
 the native spec (`2026-09-26-pyrgus-apple-design.md`, in the native app repo,
 updated 2026-09-26): a segmented length control in the app, a conditional widget configuration
 parameter, and a copy of `src/core/test-vectors.json` in the native test suite.
+
+**Pending (2026-09-27, `docs/2026-09-27-custom-password-spec.md`):** the native repo needs the
+visible names Password and Custom Password, Custom Password's 6–32 length and Include symbols
+options, Memorable's 4–8 words, first-letter capitalization, three-digit suffix and separator
+choice, and version 2 of the test vectors. Until it adopts them, the two platforms differ.
 
 ## Open questions
 
