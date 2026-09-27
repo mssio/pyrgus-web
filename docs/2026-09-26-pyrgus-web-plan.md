@@ -14,7 +14,7 @@
 
 - Runtime dependencies are exactly `react`, `react-dom`, `@headlessui/react`, `clsx`. Nothing else, ever, without asking.
 - Every version in `package.json` is exact (no `^`, no `~`). `.npmrc` contains `save-exact=true`.
-- Node 24 LTS (`.nvmrc` = `24`, `engines.node` = `24.x`).
+- Node 24 LTS (`.nvmrc` = `24`, `engines.node` = `24.x`). Activate the installed Node 24 before running commands and verify `node --version` reports `v24.*`; writing `.nvmrc` alone does not switch the current shell.
 - Held majors (do not upgrade): `typescript` stays 6.x (`typescript-eslint` supports `<6.1.0`), `@babel/core` stays 7.x (`babel-plugin-react-compiler` is built on Babel 7), `@types/node` stays 24.x (matches the Node 24 runtime).
 - All randomness goes through `src/core/random.ts`. `Math.random` is forbidden everywhere (ESLint `no-restricted-properties`). Never reduce with `x % n` without rejection sampling.
 - No network access from the page: no `fetch`, no XHR, no third-party scripts, fonts, analytics or CDNs.
@@ -49,7 +49,7 @@ Inputs and conditions the spec implies but that are easy to miss. Each has a tes
 1. **Clipboard write is refused** (permission denied, unsupported browser, insecure context) → the user sees "Couldn't copy…", never a false "Copied ✓", and no clear timer is armed. [Task 6 clipboard test; Task 8 GeneratorCard test]
 2. **`localStorage` throws or holds junk** (Safari private mode, blocked site data, a value from an older/newer build) → the page works with defaults (`standard`, `6`) and never crashes. [Task 6 preferences test]
 3. **Longest secret on the narrowest screen** (Secret 256 at 320 px) → wraps onto several lines, no horizontal scroll, nothing truncated. [Task 10 Playwright test]
-4. **Rapid successive actions** (copy, copy again, or copy then regenerate) → only the latest copied value is ever cleared, and "Copied ✓" never lingers on a new password. [Task 6 clipboard test; Task 7 hook test]
+4. **Rapid successive actions and delayed clipboard promises** (copy, copy again, or copy then regenerate/change format/change PIN length) → a newer copy invalidates old timers and in-flight clears; stale copy successes or failures never update the current password’s feedback. Recheck focus after a delayed read. [Task 6 deferred-read/write tests; Task 7 deferred-copy tests]
 5. **The user copies something else, or leaves the tab, within 90 s** → Pyrgus never clears the clipboard content it did not write, and never clears while unfocused. [Task 6 clipboard test]
 
 ---
@@ -123,7 +123,8 @@ design updates the spec in the same commit.
 - `npm test` — Vitest (unit + component)
 - `npm run test:e2e` — Playwright against `preview`
 
-Before claiming anything is done: `lint`, `build`, `test` and `test:e2e` all pass.
+Before claiming any task done: `lint`, `build` and `test` all pass. From Task 10 onward,
+`test:e2e` must also pass; its configuration and specs do not exist before Task 10.
 
 ## Layout
 
@@ -1744,6 +1745,70 @@ describe('copySecret', () => {
     expect(readText).not.toHaveBeenCalled()
   })
 
+  it.each(['new copy', 'cancel', 'blur'] as const)(
+    'does not clear after %s occurs during a delayed read',
+    async (action) => {
+      let resolveRead!: (value: string) => void
+      readText.mockImplementationOnce(() => new Promise<string>((resolve) => { resolveRead = resolve }))
+      await copySecret('old')
+      await vi.advanceTimersByTimeAsync(CLEAR_AFTER_MS)
+      expect(readText).toHaveBeenCalledTimes(1)
+
+      if (action === 'new copy') await copySecret('new')
+      else if (action === 'cancel') cancelPendingClear()
+      else focused = false
+
+      resolveRead('old') // Snapshot taken before the intervening action.
+      await vi.advanceTimersByTimeAsync(0)
+      expect(clipboardText).toBe(action === 'new copy' ? 'new' : 'old')
+      expect(writeText).not.toHaveBeenCalledWith('')
+    },
+  )
+
+  it('invalidates an in-flight clear as soon as a new write starts', async () => {
+    let resolveRead!: (value: string) => void
+    let resolveWrite!: () => void
+    readText.mockImplementationOnce(() => new Promise<string>((resolve) => { resolveRead = resolve }))
+    await copySecret('old')
+    await vi.advanceTimersByTimeAsync(CLEAR_AFTER_MS)
+    writeText.mockImplementationOnce(() => new Promise<void>((resolve) => { resolveWrite = resolve }))
+    const pendingCopy = copySecret('new')
+    resolveRead('old')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(writeText).not.toHaveBeenCalledWith('')
+    clipboardText = 'new'
+    resolveWrite()
+    await pendingCopy
+  })
+
+  it('an older write completing late cannot replace the newer clear timer', async () => {
+    let resolveWrite!: () => void
+    // Delay acknowledgement of the first write; the clipboard already contains its value.
+    writeText.mockImplementationOnce((text) => {
+      clipboardText = text
+      return new Promise<void>((resolve) => { resolveWrite = resolve })
+    })
+    const first = copySecret('first')
+    await copySecret('second')
+    await vi.advanceTimersByTimeAsync(1000)
+    resolveWrite()
+    await first
+    await vi.advanceTimersByTimeAsync(CLEAR_AFTER_MS - 1000)
+    expect(readText).toHaveBeenCalledTimes(1)
+    expect(clipboardText).toBe('')
+  })
+
+  it('cancellation during a pending write prevents a later clear timer', async () => {
+    let resolveWrite!: () => void
+    writeText.mockImplementationOnce(() => new Promise<void>((resolve) => { resolveWrite = resolve }))
+    const pendingCopy = copySecret('abc')
+    cancelPendingClear()
+    resolveWrite()
+    await pendingCopy
+    await vi.advanceTimersByTimeAsync(CLEAR_AFTER_MS)
+    expect(readText).not.toHaveBeenCalled()
+  })
+
   it('rejects when the Clipboard API is missing', async () => {
     vi.stubGlobal('navigator', {})
     await expect(copySecret('abc')).rejects.toThrow()
@@ -1838,6 +1903,7 @@ Expected: FAIL — cannot resolve `./clipboard`, `./preferences`, `./spell`.
 export const CLEAR_AFTER_MS = 90_000
 
 let pendingClear: ReturnType<typeof setTimeout> | undefined
+let copyVersion = 0
 
 /**
  * Copies a secret and, 90 s later, clears the clipboard only if this tab has focus and the clipboard
@@ -1845,28 +1911,39 @@ let pendingClear: ReturnType<typeof setTimeout> | undefined
  * Rejects if the write fails; in that case nothing is scheduled.
  */
 export async function copySecret(secret: string): Promise<void> {
-  await navigator.clipboard.writeText(secret)
+  // Invalidate an older timer/read immediately, even while this write is pending.
   cancelPendingClear()
+  const version = copyVersion
+  await navigator.clipboard.writeText(secret)
+  if (version !== copyVersion) return
   pendingClear = setTimeout(() => {
     pendingClear = undefined
-    void clearIfUnchanged(secret)
+    void clearIfUnchanged(secret, version)
   }, CLEAR_AFTER_MS)
 }
 
 export function cancelPendingClear(): void {
+  copyVersion++ // Invalidates in-flight reads and writes as well as scheduled timers.
   if (pendingClear !== undefined) clearTimeout(pendingClear)
   pendingClear = undefined
 }
 
-async function clearIfUnchanged(secret: string): Promise<void> {
-  if (!document.hasFocus()) return
+async function clearIfUnchanged(secret: string, version: number): Promise<void> {
+  if (version !== copyVersion || !document.hasFocus()) return
   try {
-    if ((await navigator.clipboard.readText()) === secret) await navigator.clipboard.writeText('')
+    const current = await navigator.clipboard.readText()
+    if (version !== copyVersion || !document.hasFocus() || current !== secret) return
+    await navigator.clipboard.writeText('')
   } catch {
     // Read refused (e.g. Safari): never clear what we cannot verify.
   }
 }
 ```
+
+Clipboard reads and writes are separate browser operations, not an atomic compare-and-clear.
+The guards prevent stale operations controlled by this page from initiating a clear; they cannot
+cancel a browser write already issued or eliminate an external clipboard change between read and
+write. Keep clearing described as best effort.
 
 - [ ] **Step 5: Implement `src/lib/preferences.ts`**
 
@@ -2064,6 +2141,66 @@ describe('usePyrgus', () => {
     expect(result.current.copied).toBe(false)
   })
 
+  it.each([
+    ['regenerate', 'resolve'], ['regenerate', 'reject'],
+    ['format', 'resolve'], ['format', 'reject'],
+    ['pin length', 'resolve'], ['pin length', 'reject'],
+  ] as const)('ignores a stale copy after %s when its write later %s', async (change, outcome) => {
+    let resolveWrite!: () => void
+    let rejectWrite!: (reason: Error) => void
+    writeText.mockImplementationOnce(() => new Promise<void>((resolve, reject) => {
+      resolveWrite = resolve
+      rejectWrite = reject
+    }))
+    const { result } = renderHook(() => usePyrgus())
+    act(() => result.current.setFormat('pin'))
+    let pendingCopy!: Promise<void>
+    act(() => { pendingCopy = result.current.copy() })
+    act(() => {
+      if (change === 'regenerate') result.current.regenerate()
+      else if (change === 'format') result.current.setFormat('secret256')
+      else result.current.setPinLength(8)
+    })
+    const currentPassword = result.current.password
+    await act(async () => {
+      if (outcome === 'resolve') resolveWrite()
+      else rejectWrite(new Error('denied'))
+      await pendingCopy
+    })
+    expect(result.current.password).toBe(currentPassword)
+    expect(result.current.copied).toBe(false)
+    expect(result.current.copyFailed).toBe(false)
+    expect(result.current.announcement).toBe('New password generated')
+  })
+
+  it.each(['resolve', 'reject'] as const)(
+    'ignores an older copy that later %s after a newer copy succeeds',
+    async (outcome) => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+      let resolveWrite!: () => void
+      let rejectWrite!: (reason: Error) => void
+      writeText.mockImplementationOnce(() => new Promise<void>((resolve, reject) => {
+        resolveWrite = resolve
+        rejectWrite = reject
+      }))
+      const { result } = renderHook(() => usePyrgus())
+      let first!: Promise<void>
+      act(() => { first = result.current.copy() })
+      await act(() => result.current.copy())
+      act(() => vi.advanceTimersByTime(1000))
+      await act(async () => {
+        if (outcome === 'resolve') resolveWrite()
+        else rejectWrite(new Error('denied'))
+        await first
+      })
+      expect(result.current.copied).toBe(true)
+      expect(result.current.copyFailed).toBe(false)
+      expect(result.current.announcement).toBe('Copied')
+      act(() => vi.advanceTimersByTime(COPIED_MS - 1000))
+      expect(result.current.copied).toBe(false) // Stale success must not restart the timer.
+    },
+  )
+
   it('reports a refused clipboard write without claiming success', async () => {
     writeText.mockRejectedValueOnce(new DOMException('denied', 'NotAllowedError'))
     const { result } = renderHook(() => usePyrgus())
@@ -2082,8 +2219,13 @@ Expected: FAIL — cannot resolve `./usePyrgus`.
 
 - [ ] **Step 3: Implement `src/hooks/usePyrgus.ts`**
 
+Use a ref-backed version to invalidate pending feedback on every new copy and every generation
+change. Guard both success and failure after awaiting the clipboard. This version is independent
+of Task 6's clear version: regenerating dismisses old feedback but must retain the 90-second clear
+for a secret already copied. A newer copy invalidates the previous clear through `copySecret`.
+
 ```ts
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { formatEntropy } from '../core/entropy'
 import type { FormatId, PinLength } from '../core/formats'
 import { generate } from '../core/generate'
@@ -2125,6 +2267,7 @@ export function usePyrgus(): Pyrgus {
   const [copiedId, setCopiedId] = useState(0)
   const [copyFailed, setCopyFailed] = useState(false)
   const [announcement, setAnnouncement] = useState('')
+  const feedbackVersion = useRef(0)
 
   useEffect(() => {
     if (copiedId === 0) return
@@ -2133,6 +2276,7 @@ export function usePyrgus(): Pyrgus {
   }, [copiedId])
 
   function next(nextFormat: FormatId, nextPinLength: PinLength) {
+    feedbackVersion.current++
     setPassword(tryGenerate(nextFormat, nextPinLength))
     setCopiedId(0)
     setCopyFailed(false)
@@ -2153,12 +2297,15 @@ export function usePyrgus(): Pyrgus {
 
   async function copy() {
     if (password === null) return
+    const version = ++feedbackVersion.current
     try {
       await copySecret(password)
+      if (version !== feedbackVersion.current) return
       setCopyFailed(false)
       setCopiedId((id) => id + 1)
       setAnnouncement('Copied')
     } catch {
+      if (version !== feedbackVersion.current) return
       setCopiedId(0)
       setCopyFailed(true)
       setAnnouncement('Copy failed')
