@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "alphabets": {
+    "standardLower": "abcdefghijkmnopqrstuvwxyz",
+    "standardUpper": "ABCDEFGHJKLMNPQRSTUVWXYZ",
+    "standardDigits": "23456789",
+    "strongLower": "abcdefghijklmnopqrstuvwxyz",
+    "strongUpper": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "strongDigits": "0123456789",
+    "strongSymbols": "!@#$%^&*-_=+?",
+    "pin": "0123456789",
+    "hex": "0123456789abcdef"
+  },
+  "entropy": {
+    "standard": { "bits": 90.144, "display": "90.1" },
+    "strong": { "bits": 149.4916, "display": "~149" },
+    "memorable": { "bits": 58.3431, "display": "58.3" },
+    "pin4": { "bits": 13.2877, "display": "13.3" },
+    "pin6": { "bits": 19.9316, "display": "19.9" },
+    "pin8": { "bits": 26.5754, "display": "26.6" },
+    "secret128": { "bits": 128, "display": "128" },
+    "secret256": { "bits": 256, "display": "256" }
+  },
+  "wordlist": {
+    "count": 7776,
+    "first": "abacus",
+    "last": "zoom",
+    "sha256": "addd35536511597a02fa0a9ff1e5284677b8883b83e986e43f15a3db996b903e"
+  }
+}
