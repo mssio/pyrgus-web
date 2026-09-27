@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cancelPendingClear } from '../lib/clipboard'
+import { FORMAT_LABELS } from '../core/formats'
 import { FORMAT_KEY, PIN_LENGTH_KEY } from '../lib/preferences'
 import { GeneratorCard } from './GeneratorCard'
 
@@ -102,5 +103,20 @@ describe('GeneratorCard', () => {
     setup()
     expect(screen.getByTestId('secret')).toHaveAttribute('aria-hidden', 'true')
     expect(screen.getByText(/^Generated password: /)).toHaveClass('sr-only')
+  })
+
+  it('keeps every format menu item aligned by always rendering its icon slot', async () => {
+    const user = setup()
+    await user.click(screen.getByRole('button', { name: /^Format:/ }))
+    for (const label of Object.values(FORMAT_LABELS)) {
+      const item = screen.getByRole('menuitem', { name: label })
+      const icon = item.querySelector('[data-slot="icon"]')
+      expect(icon).not.toBeNull()
+      if (label === 'Standard') {
+        expect(icon).not.toHaveClass('invisible')
+      } else {
+        expect(icon).toHaveClass('invisible')
+      }
+    }
   })
 })

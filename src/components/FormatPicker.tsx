@@ -23,7 +23,7 @@ export function FormatPicker({ value, onChange }: { value: FormatId; onChange: (
             <DropdownHeading>{group.heading}</DropdownHeading>
             {group.ids.map((id) => (
               <DropdownItem key={id} onClick={() => onChange(id)}>
-                {id === value ? <CheckIcon /> : null}
+                <CheckIcon className={id === value ? undefined : 'invisible'} />
                 <DropdownLabel>{FORMAT_LABELS[id]}</DropdownLabel>
               </DropdownItem>
             ))}
