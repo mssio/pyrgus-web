@@ -258,7 +258,9 @@ compares against its copy, so any divergence shows up as a failing test when the
 
 ### Generator card
 
-A centered column, max width ~28rem, working down to a 320 px viewport. Top to bottom:
+A column 28rem wide at most (32rem from 640 px), working down to a 320 px viewport, with 1.5rem
+card padding (2rem from 640 px). It is centred vertically in the space between header and footer;
+when the viewport is shorter than the content, the page scrolls. Top to bottom:
 
 1. **Format picker.** Catalyst `Dropdown` with `DropdownSection`/`DropdownHeading`: **Passwords**
    (Standard, Strong, Memorable, PIN) and **Secrets** (Secret 128, Secret 256). The button shows the
@@ -267,7 +269,8 @@ A centered column, max width ~28rem, working down to a 320 px viewport. Top to b
    not selected, so item labels stay aligned within each section.
 2. **PIN length.** A segmented `4 · 6 · 8` control built on Headless UI `RadioGroup`, rendered only
    when PIN is selected.
-3. **The secret.** Large monospaced text, digits highlighted in indigo (all formats, including hex).
+3. **The secret.** Large monospaced text (24 px; 30 px from 640 px), digits highlighted in indigo
+   (all formats, including hex).
    Click to copy. **It wraps and never truncates** (`overflow-wrap: anywhere`, no line clamp, no
    ellipsis): a truncated secret that looks complete is a correctness bug.
 4. **Entropy caption:** e.g. "90.1 bits of entropy". No strength adjective, no color judgment.
@@ -659,6 +662,10 @@ production share one source:
 - **Build output:** `dist/index.html` contains no inline `<script>` and no `style` attribute, and no
   `data:` URI appears anywhere in `dist/` — every non-binary file (not just HTML/CSS/JS) is scanned
   for the data-URI shape. (Runs in Playwright because its web server always builds first.)
+- **Layout** (`e2e/layout.spec.ts`): the generator is vertically centred between header and footer
+  at 1280 × 900; it is 32rem wide with a 30 px secret from 640 px and unchanged at 320 px; Secret 256
+  wraps without overflow at 640 px; at 1280 × 400 the content never overlaps the header or footer and
+  the page scrolls.
 
 Redirect behavior (`/generate` → `/`) is verified against the Vercel preview deploy, since only
 Vercel applies `vercel.json` redirects.

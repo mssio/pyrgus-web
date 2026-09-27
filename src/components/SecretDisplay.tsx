@@ -27,7 +27,7 @@ export function SecretDisplay({ value, onCopy }: { value: string; onCopy: () => 
         aria-hidden="true"
         title="Click to copy"
         onClick={onCopy}
-        className="cursor-pointer font-mono text-2xl/9 font-medium tracking-wide wrap-anywhere text-zinc-950 select-all dark:text-white"
+        className="cursor-pointer font-mono text-2xl/9 font-medium tracking-wide wrap-anywhere text-zinc-950 select-all sm:text-3xl/10 dark:text-white"
       >
         <SecretText value={value} />
       </p>

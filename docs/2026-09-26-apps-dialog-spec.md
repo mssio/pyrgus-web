@@ -1,7 +1,7 @@
 # Pyrgus Web — Apps Dialog, Centered Generator and Docs Rules — Design
 
 **Date:** 2026-09-26
-**Status:** Approved 2026-09-26.
+**Status:** Implemented 2026-09-26.
 **Plan:** `docs/2026-09-26-apps-dialog-plan.md`.
 **Amends:** `docs/2026-09-26-pyrgus-web-spec.md` (the binding spec). The amendments listed under
 [Binding spec changes](#binding-spec-changes) are applied to it in the same commit as the code, per

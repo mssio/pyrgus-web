@@ -10,11 +10,11 @@ export function GeneratorCard() {
   const p = usePyrgus()
 
   return (
-    <section aria-labelledby="generator-heading" className="mx-auto w-full max-w-md px-4">
+    <section aria-labelledby="generator-heading" className="mx-auto w-full max-w-md px-4 sm:max-w-lg">
       <h1 id="generator-heading" className="sr-only">
         Pyrgus password generator
       </h1>
-      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10">
+      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-zinc-950/5 sm:p-8 dark:bg-zinc-900 dark:ring-white/10">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <FormatPicker value={p.format} onChange={p.setFormat} />
           {p.format === 'pin' ? <PinLengthControl value={p.pinLength} onChange={p.setPinLength} /> : null}
