@@ -1,0 +1,13 @@
+:root {
+  color-scheme: light dark;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+main {
+  max-width: 28rem;
+  margin: 20vh auto;
+  padding: 0 1rem;
+  text-align: center;
+}
+a {
+  color: #4f46e5;
+}
