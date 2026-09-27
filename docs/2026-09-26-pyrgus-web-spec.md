@@ -476,7 +476,7 @@ works under its rules. Kept short (one screen or two) and imperative. Contents:
 
 1. **What this is** — one paragraph: Pyrgus Web, a static browser-only password generator; the spec
    at `docs/2026-09-26-pyrgus-web-spec.md` is the source of truth, and design changes update the spec
-   in the same change.
+   in the same change; larger changes come as dated change specs that amend it.
 2. **Commands** — `npm ci`, `dev`, `build`, `preview`, `lint`, `format`, `test`, `test:e2e`, and
    "before claiming done: `lint`, `build`, `test`, `test:e2e` all pass".
 3. **Layout** — a short map: `src/core/` (framework-free generator), `src/components/`,
@@ -504,10 +504,18 @@ works under its rules. Kept short (one screen or two) and imperative. Contents:
    alphabets, formats, entropy or the wordlist means updating the vectors and flagging that the
    native repo needs the same change. Agents do not edit the native repo.
 9. **Scope** — work only inside this repository.
+10. **Specs and plans** — everything flat in `docs/`: `YYYY-MM-DD-<topic>-spec.md`, `-plan.md` and an
+    optional `-task-overview.md`. This spec always describes the site as built; change specs carry a
+    Date/Status/Amends/Plan header, fixed sections, and end with "Binding spec changes"; plans link
+    their spec, repeat the global constraints, and use test-first checkbox tasks. Spec approved →
+    plan → user picks execution → code.
+11. **Downloads and installs** — agents never download files or install, update or uninstall
+    packages. They ask the user with the exact URL or command, the destination (`tmp/<name>`), and
+    how the result will be verified, then verify before use. `npm ci` and installed tools are allowed.
 
 ### `CLAUDE.md`
 
-A single line: `@AGENTS.md`.
+A single line: `@AGENTS.md`. It deliberately holds no rules of its own, so the two cannot drift.
 
 ### `README.md` — written last
 
@@ -523,8 +531,9 @@ evaluating or contributing to the project. Contents:
    Plus the stated limitations: clipboard clearing depends on the browser; JS strings cannot be wiped
    from memory; a compromised browser or extension is out of scope.
 3. **Formats** — the six-format table with entropy, and one line on the Standard exclusions.
-4. **Development** — prerequisites (Node 24 LTS, from `.nvmrc`), `npm ci`, the scripts, and
-   the note that the CSP is enforced in `preview`, not `dev`.
+4. **Development** — prerequisites (Node 24 LTS, from `.nvmrc`), `npm ci`, the scripts, the note
+   that the CSP is enforced in `preview`, not `dev`, and a "Specs and plans" paragraph: the naming
+   scheme, the binding spec, and a pointer to `AGENTS.md`.
 5. **Testing** — what the unit, component and Playwright suites cover, in a few lines.
 6. **Deployment** — Vercel; headers and redirects in `vercel.json`.
 7. **Pyrgus for iPhone, iPad & Mac** — one line: coming soon.

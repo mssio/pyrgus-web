@@ -5,7 +5,8 @@
 Pyrgus Web: a static, browser-only password and secret-key generator served at https://p.mss.io.
 Secrets are generated in the browser with `crypto.getRandomValues`; the page cannot make network
 requests. The spec at `docs/2026-09-26-pyrgus-web-spec.md` is the source of truth. A change to the
-design updates the spec in the same commit.
+design updates the spec in the same commit; larger changes come as dated change specs that amend it
+(see "Specs and plans").
 
 ## Commands
 
@@ -29,7 +30,49 @@ Before claiming any task done: `lint`, `build` and `test` all pass. From Task 10
 - `test-support/` — test-only helpers (seeded RNG, chi-squared, Vitest setup)
 - `e2e/` — Playwright specs
 - `docs/` — spec and plan
-- `tmp/` — gitignored Tailwind Plus downloads; never commit
+- `tmp/` — gitignored downloads, placed there by the user; never commit
+
+## Specs and plans
+
+Everything lives flat in `docs/`. Never use a tool's default location (such as
+`docs/superpowers/specs/`).
+
+| File                                       | Purpose                                                                          |
+| ------------------------------------------ | -------------------------------------------------------------------------------- |
+| `docs/YYYY-MM-DD-<topic>-spec.md`          | Design: what and why. Approved by the user before any plan.                      |
+| `docs/YYYY-MM-DD-<topic>-plan.md`          | Implementation plan: how, step by step. Written only after the spec is approved. |
+| `docs/YYYY-MM-DD-<topic>-task-overview.md` | Optional one-table summary of a long plan.                                       |
+
+`YYYY-MM-DD` is the date the spec was written; the plan and overview reuse the spec's date and
+`<topic>`. `<topic>` is short kebab-case (`apps-dialog`).
+
+**The binding spec**, `docs/2026-09-26-pyrgus-web-spec.md`, always describes the site as built. Edit
+it only in the same commit as the code it describes.
+
+**A change spec** (any later `-spec.md`):
+
+- starts with `**Date:**`, `**Status:**` (`Draft` → `Approved YYYY-MM-DD` → `Implemented YYYY-MM-DD`),
+  `**Amends:**` (the binding spec) and, once one exists, `**Plan:**`;
+- has these sections, in order: Summary; Intent (what the user asked for, kept apart from
+  assumptions); Non-goals; the design, per file or component; Security; Testing; Binding spec changes;
+- ends with **Binding spec changes**: a numbered list of the exact edits to the binding spec (and to
+  `LICENSE` / `README.md` where affected), applied in the implementation commits;
+- is not edited after its status becomes `Implemented`. The binding spec carries the current truth.
+
+**A plan** (`-plan.md`):
+
+- starts with the writing-plans header (goal, architecture, tech stack), a `**Spec:**` line, and the
+  rule "when the plan and the spec disagree, the spec wins; stop and report";
+- repeats the Global Constraints that bind the work, copied from this file and the spec;
+- is split into numbered tasks. Each task lists the files it creates, modifies or deletes; uses
+  checkbox steps (`- [ ]`); writes the failing test before the code; gives exact commands and their
+  expected result; and ends with `lint`, `build`, `test` and `test:e2e` passing and a commit with
+  its message.
+
+Neither ever pastes Tailwind Plus source; a plan says which file to `cp` from `tmp/`.
+
+**Order:** spec written → user approves the spec → plan written → user reviews the plan and picks how
+to execute it → code. No product code before both are approved.
 
 ## Security rules (non-negotiable)
 
@@ -52,6 +95,24 @@ Before claiming any task done: `lint`, `build` and `test` all pass. From Task 10
   `@types/node` 24.x (matches Node 24). Dependabot ignores their major bumps.
 - Runtime dependencies are `react`, `react-dom`, `@headlessui/react`, `clsx`. Ask before adding any
   other runtime dependency.
+
+## Downloads and installs
+
+Agents never fetch from the network or change installed packages themselves. That covers
+downloading files (Tailwind Plus kits, fonts, wordlists, anything into `tmp/`), `npm install`,
+`npm update`, `npm uninstall`, `npx <package>` for anything not already installed, and
+`npx playwright install`.
+
+Instead, stop and ask the user, giving:
+
+1. the exact URL or command (npm commands with `-E`, exact versions);
+2. the destination path (`tmp/<name>` for files);
+3. how the result will be verified: SHA-256, version number, or the `package.json` / lockfile diff.
+
+Wait, then verify before using the result. If it does not verify, say so and do not use it.
+
+Allowed without asking: `npm ci` (installs exactly what the committed lockfile says) and running
+tools that are already installed.
 
 ## Tailwind Plus
 
