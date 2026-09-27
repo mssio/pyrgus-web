@@ -1,0 +1,7 @@
+tmp
+dist
+docs
+package-lock.json
+src/components/catalyst
+playwright-report
+test-results

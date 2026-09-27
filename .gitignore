@@ -25,3 +25,7 @@ dist-ssr
 
 # Temporary files
 tmp
+
+# Playwright
+playwright-report
+test-results
