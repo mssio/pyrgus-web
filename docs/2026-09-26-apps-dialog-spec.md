@@ -87,9 +87,15 @@ One component owns the open state (`useState(false)`) and renders two things:
 trapped inside; Escape and a backdrop click close it; focus returns to the pill on close; the page
 behind is inert and scroll-locked.
 
-**Mobile:** Catalyst's dialog renders as a bottom sheet below 640 px. Without the phone mockup the
-content is expected to fit a 320 × 640 viewport; the visual check confirms it. On a shorter screen
-the dialog's own container scrolls (Catalyst default), never the page behind it.
+**Viewport fit:** `AppsDialog` constrains the panel to a flex column with a maximum height of
+`calc(100dvh - 1.5rem)`, or `calc(100dvh - 2rem)` from 640 px. The chip, title, description and
+Close action do not shrink; the chip keeps its natural width. The body uses `min-h-0 overflow-y-auto`
+so the widget and all four feature points remain available by scrolling, while Close stays visible.
+No content or typography is reduced, and the copied Catalyst component remains unchanged.
+
+**Mobile:** Below 640 px the dialog is a bottom sheet. At 320 × 640 the panel fits the viewport,
+with the body scrolling to reveal the remaining features and Close fully in view. The page behind
+remains scroll-locked. On very short screens Catalyst's outer container can also scroll as needed.
 
 ### Catalyst component — `src/components/catalyst/dialog.tsx`
 
@@ -112,6 +118,8 @@ licence exclusion.
   (`element.style`), which `style-src 'self'` permits; it inserts no inline `<style>`, no `style="…"`
   markup and no HTML strings, so Trusted Types is unaffected. The Playwright check below proves this
   in a real browser rather than relying on this reasoning.
+- Panel sizing and body scrolling use Tailwind classes in `AppsDialog`, with no new inline styles
+  or changes to the security headers. Background scroll locking remains owned by Headless UI.
 - The dialog shows no generated value. The widget mockup shows only its fixed mask.
 
 ## Testing
@@ -128,10 +136,13 @@ licence exclusion.
 
 **`e2e/smoke.spec.ts`** (Playwright, production headers via `preview`):
 
-- A new test opens the dialog, checks it is visible, closes it with Escape, and asserts zero CSP
-  or Trusted Types violations and no console errors.
-- A second new test opens the dialog at 320 × 640 and asserts **Close** is in view with no
-  horizontal overflow.
+- A new test opens the named accessible dialog, checks its heading is visible, closes it with
+  Escape, checks the dialog is removed and focus returns, and asserts zero CSP or Trusted Types
+  violations and no console errors. Catalyst’s accessible root has zero height because its panel
+  is fixed-positioned, so visibility is asserted on the heading inside the named dialog.
+- A second new test opens the dialog at 320 × 640 and asserts **Close** is fully in view with no
+  horizontal overflow. Scrolling the body reaches the final feature while Close remains visible;
+  scrolling the body or backdrop does not move the page behind it.
 - The existing 320 px wrapping test is unchanged and must still pass.
 
 **`e2e/layout.spec.ts`** (new, Playwright):

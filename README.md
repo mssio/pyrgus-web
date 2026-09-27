@@ -77,8 +77,8 @@ Coming soon.
 ## Credits and licences
 
 - This project's code is [MIT](LICENSE)-licensed, **except** files derived from Tailwind Plus
-  (`src/components/catalyst/`, `src/components/PhoneMockup.tsx`, `src/assets/phone-frame.svg`),
-  which are under the [Tailwind Plus licence](https://tailwindcss.com/plus/license). See `LICENSE`.
+  (`src/components/catalyst/`), which are under the
+  [Tailwind Plus licence](https://tailwindcss.com/plus/license). See `LICENSE`.
 - Memorable passwords use the [EFF long wordlist](https://www.eff.org/dice) (CC BY 3.0 US).
 - [Inter](https://rsms.me/inter/) and [JetBrains Mono](https://www.jetbrains.com/lp/mono/) are
   under the SIL Open Font License 1.1 (see `src/assets/fonts/`).

@@ -22,7 +22,7 @@ SOFTWARE.
 
 ---
 
-EXCLUSION: Files in src/components/catalyst/ and src/components/PhoneMockup.tsx /
-src/assets/phone-frame.svg are derived from Tailwind Plus and are licensed under
-the Tailwind Plus licence (https://tailwindcss.com/plus/license), not under the
-MIT licence above. They may not be redistributed separately from this project.
+EXCLUSION: Files in src/components/catalyst/ are derived from Tailwind Plus and
+are licensed under the Tailwind Plus licence
+(https://tailwindcss.com/plus/license), not under the MIT licence above. They
+may not be redistributed separately from this project.

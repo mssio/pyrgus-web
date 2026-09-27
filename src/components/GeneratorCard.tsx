@@ -53,15 +53,6 @@ export function GeneratorCard() {
           <span key={p.announcementId}>{p.announcement}</span>
         </p>
       </div>
-
-      <div className="mt-6 text-center">
-        <a
-          href="#apps"
-          className="inline-flex rounded-full px-4 py-1.5 text-sm/6 font-medium text-indigo-700 ring-1 ring-indigo-600/20 hover:bg-indigo-50 dark:text-indigo-300 dark:ring-indigo-400/30 dark:hover:bg-indigo-500/10"
-        >
-          Pyrgus for iPhone, iPad &amp; Mac — coming soon ↓
-        </a>
-      </div>
     </section>
   )
 }
