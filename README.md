@@ -15,7 +15,8 @@ Every claim below points at the code or config that makes it true.
   alongside a strict CSP with Trusted Types.
 - **No analytics, no third-party scripts, no CDN fonts.**
 - **Nothing stored but your format preference.** Only `pyrgus.format` and `pyrgus.pinLength` go to
-  `localStorage`; see [`src/lib/preferences.ts`](src/lib/preferences.ts).
+  `localStorage`; see [`src/lib/preferences.ts`](src/lib/preferences.ts). Custom Password and
+  Memorable options last only for the page session and reset on reload.
 
 **Limitations.** Clearing the clipboard after 90 s depends on the browser: it happens only while the
 tab is open and focused, and only where the browser lets the page read the clipboard (Safari does
@@ -24,21 +25,27 @@ extension is out of scope.
 
 ## Formats
 
-| Format          | Example                                | Entropy                 |
-| --------------- | -------------------------------------- | ----------------------- |
-| Password        | `khduvn-xeRvpr-mzt7ai`                 | 90.1 bits               |
-| Custom Password | `k7$Rm2xPq!vLz9Wn#tBc4eYh`             | ~149 bits               |
-| Memorable       | `Vivid-Cobra-Mango-Drop-down-Lake-042` | 87.5 bits               |
-| PIN (4 / 6 / 8) | `478210`                               | 13.3 / 19.9 / 26.6 bits |
-| Secret 128      | 32 hex characters                      | 128 bits                |
-| Secret 256      | 64 hex characters                      | 256 bits                |
+| Format          | Example                                | Entropy                           |
+| --------------- | -------------------------------------- | --------------------------------- |
+| Password        | `khduvn-xeRvpr-mzt7ai`                 | 90.1 bits                         |
+| Custom Password | `k7$Rm2xPq!vLz9Wn#tBc4eYh`             | ~35 to ~199 bits (default ~149)   |
+| Memorable       | `Vivid-Cobra-Mango-Drop-down-Lake-042` | 61.7 to 113.4 bits (default 87.5) |
+| PIN (4 / 6 / 8) | `478210`                               | 13.3 / 19.9 / 26.6 bits           |
+| Secret 128      | 32 hex characters                      | 128 bits                          |
+| Secret 256      | 64 hex characters                      | 256 bits                          |
 
 Password never uses the look-alike characters `l`, `O`, `I`, `0` or `1`.
 
-Custom Password is 24 characters with symbols; Memorable is six capitalized words from the EFF long
-wordlist and a three-digit suffix (`000`–`999`), joined by hyphens. The generator core already
-accepts other Custom Password lengths (6–32, symbols optional) and Memorable word counts (4–8) and
-separators (space, `-` or `_`); the page does not offer those controls yet.
+**Custom Password** has a 6–32 character length slider and an Include symbols switch (default 24
+characters, symbols on). It always contains a lowercase letter, an uppercase letter and a digit, plus
+a symbol when symbols are on. Its entropy depends on the settings and is an approximate upper bound,
+shown with `~` (`~149` at the default).
+
+**Memorable** has a 4–8 word slider (default six) and a separator choice of space, hyphen or
+underscore (default hyphen). Each word comes from the EFF long wordlist with its first letter
+capitalized — entries such as `drop-down` keep their own hyphen — followed by a three-digit suffix
+from `000` to `999`, all joined by the chosen separator. Its entropy is exact: 61.7, 74.6, 87.5, 100.4
+or 113.4 bits for four to eight words, whatever the separator.
 
 ## Development
 
@@ -66,8 +73,8 @@ are in [`AGENTS.md`](AGENTS.md).
 ## Testing
 
 ```sh
-npm test           # Vitest: generator shape, exclusions, uniformity, entropy, wordlist, UI
-npm run test:e2e   # Playwright on the production build: zero CSP violations, 320 px layout
+npm test           # Vitest: generator shape, options, exclusions, uniformity, entropy, wordlist, UI
+npm run test:e2e   # Playwright on the production build: zero CSP violations, keyboard, copy, 320 px layout
 ```
 
 ## Deployment

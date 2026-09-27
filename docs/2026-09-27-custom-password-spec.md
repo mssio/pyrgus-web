@@ -1,7 +1,7 @@
 # Pyrgus Web — Password, Custom Password and Memorable Options — Design
 
 **Date:** 2026-09-27
-**Status:** Approved 2026-09-27
+**Status:** Implemented 2026-09-27
 **Amends:** `docs/2026-09-26-pyrgus-web-spec.md` (the binding spec). Apply the amendments below
 in the same implementation commits as the behavior they describe.
 **Plan:** `docs/2026-09-27-custom-password-plan.md`

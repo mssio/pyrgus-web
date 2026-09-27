@@ -15,7 +15,8 @@ export function SecretText({ value }: { value: string }) {
 
 /**
  * Wraps at any character and never truncates: a truncated secret that looks complete is a
- * correctness bug. The visual value is aria-hidden; screen readers get the spelled form instead.
+ * correctness bug. Spaces are kept exactly (pre-wrap), so a copy or selection matches the value.
+ * The visual value is aria-hidden; screen readers get the spelled form instead.
  */
 export function SecretDisplay({ value, onCopy }: { value: string; onCopy: () => void }) {
   return (
@@ -27,7 +28,7 @@ export function SecretDisplay({ value, onCopy }: { value: string; onCopy: () => 
         aria-hidden="true"
         title="Click to copy"
         onClick={onCopy}
-        className="cursor-pointer font-mono text-2xl/9 font-medium tracking-wide wrap-anywhere text-zinc-950 select-all sm:text-3xl/10 dark:text-white"
+        className="cursor-pointer font-mono text-2xl/9 font-medium tracking-wide wrap-anywhere whitespace-pre-wrap text-zinc-950 select-all sm:text-3xl/10 dark:text-white"
       >
         <SecretText value={value} />
       </p>

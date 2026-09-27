@@ -37,9 +37,10 @@ Vercel Analytics). `/generate` redirects to `/`.
 - Analytics, telemetry, or third-party scripts of any kind.
 - Service worker / offline install (PWA).
 - A dark-mode toggle (the site follows the system setting).
-- Free-form format customization. PIN length (4/6/8) is the only option exposed in the UI; the
-  generator core also accepts Custom Password and Memorable options (see Generator core), which the
-  page currently leaves at their defaults.
+- Free-form format customization. The only options are PIN length (4/6/8), Custom Password's length
+  (6–32) and Include symbols, and Memorable's word count (4–8) and separator (space, `-`, `_`).
+  Further character-class toggles, editable alphabets, grouping, numeric length fields, configurable
+  capitalization or suffix length are out of scope.
 
 ## Key decisions
 
@@ -315,23 +316,37 @@ when the viewport is shorter than the content, the page scrolls. Top to bottom:
    headings.) Every item renders the check icon; it is hidden (`invisible`) rather than omitted when
    not selected, so item labels stay aligned within each section.
 2. **PIN length.** A segmented `4 · 6 · 8` control built on Headless UI `RadioGroup`, rendered only
-   when PIN is selected.
-3. **The secret.** Large monospaced text (24 px; 30 px from 640 px), digits highlighted in indigo
+   when PIN is selected, in the picker row.
+3. **Format options** (`CustomPasswordControl.tsx`, `MemorableControl.tsx`), below the picker row and
+   above the secret, in normal flow with no fixed height; rendered only for their format, and kept
+   in the error state:
+   - **Custom Password:** a visible `Length: 24` label (the number follows state) over a full-width
+     native `<input type="range">` (`min` 6, `max` 32, `step` 1) with endpoint captions 6 and 32,
+     accessible name "Password length" and value text "`<n>` characters"; then "Include symbols"
+     with a Headless UI `Switch` whose thumb position, not just its color, shows the state.
+   - **Memorable:** a visible `Words: 6` label over a native range (`min` 4, `max` 8, `step` 1, endpoint
+     captions 4 and 8, name "Words", value text "`<n>` words"); then "Separator" and a Headless UI
+     `RadioGroup` named "Separator" with Space, Hyphen (-) and Underscore (_), in the PIN control's
+     segmented style — one column below 640 px so the labels never overflow, three from 640 px.
+   The native ranges own their keyboard behavior (arrows, Home/End); Space toggles the switch; arrows
+   move through the separators. Nothing intercepts those keys, and regeneration never moves focus.
+4. **The secret.** Large monospaced text (24 px; 30 px from 640 px), digits highlighted in indigo
    (all formats, including hex).
    Click to copy. **It wraps and never truncates** (`overflow-wrap: anywhere`, no line clamp, no
-   ellipsis): a truncated secret that looks complete is a correctness bug.
-4. **Entropy caption:** e.g. "90.1 bits of entropy". No strength adjective, no color judgment.
-5. **Buttons:** **Copy** (primary; shows "Copied ✓" for 2 s) and **Regenerate** (secondary).
+   ellipsis): a truncated secret that looks complete is a correctness bug. `white-space: pre-wrap`
+   keeps a Memorable space separator exactly; soft wrapping adds no characters, and Copy writes the
+   exact state string with no trimming or separator replacement.
+5. **Entropy caption:** e.g. "90.1 bits of entropy". No strength adjective, no color judgment.
+6. **Buttons:** **Copy** (primary; shows "Copied ✓" for 2 s) and **Regenerate** (secondary).
    Below them, the caption "Clipboard clears in 90s while this tab is open."
-6. **App pill:** a button, "Pyrgus for iPhone, iPad & Mac — coming soon", that opens the apps dialog.
+7. **App pill:** a button, "Pyrgus for iPhone, iPad & Mac — coming soon", that opens the apps dialog.
 
 ### State — `usePyrgus()`
 
 One hook owns `format`, `pinLength`, `customLength`, `includeSymbols`, `memorableWordCount`,
 `memorableSeparator`, `password`, `copied` and `error`, and exposes `setFormat`, `setPinLength`,
 `setCustomLength`, `setIncludeSymbols`, `setMemorableWordCount`, `setMemorableSeparator`,
-`regenerate()` and `copy()`. Components are presentational. (The generator card does not yet render
-controls for the four Custom Password and Memorable setters, so the page uses their defaults.)
+`regenerate()` and `copy()`. Components are presentational.
 
 - A password is generated on mount and whenever `format`, `pinLength` or a Custom Password or
   Memorable option changes. Generation and the entropy caption always receive the same complete
@@ -372,12 +387,14 @@ controls for the four Custom Password and Memorable setters, so the page uses th
 ### Accessibility
 
 - The secret is spelled out character by character, announcing case and separators
-  ("k, h, d, u, v, n, dash, x, e, capital R, …"), in an `sr-only` element next to the visible value;
+  ("k, h, d, u, v, n, dash, x, e, capital R, …"; a Memorable space is spoken as "space"), in an
+  `sr-only` element next to the visible value;
   the visible value is `aria-hidden`. (`aria-label` is not permitted on a paragraph, and a hidden
   sibling keeps the spelled text out of a manual text selection.) Both the visible value and its
   spelled form are marked `translate="no"`, so browser page translation does not send the secret to
   the vendor's translation service and does not rewrite a Memorable passphrase's words.
-- A polite live region announces "Copied" and "New password generated". Setting the same text twice
+- A polite live region announces "Copied" and "New password generated" — never the secret itself,
+  including after a Custom Password or Memorable option change. Setting the same text twice
   in a row still produces a distinct announcement (each is its own DOM node), so screen readers
   re-announce a repeat.
 - Full keyboard operation with visible focus rings. WCAG AA contrast in both themes.
@@ -385,7 +402,8 @@ controls for the four Custom Password and Memorable setters, so the page uses th
 ### Error state
 
 If secure randomness is unavailable, the card shows: "Your browser can't provide secure randomness,
-so Pyrgus won't generate a password." Copy and Regenerate are disabled.
+so Pyrgus won't generate a password." Copy and Regenerate are disabled. The format picker and the
+selected format's controls stay visible and usable; a change stays fail-closed.
 
 ### Apps dialog
 
@@ -594,10 +612,12 @@ evaluating or contributing to the project. Contents:
 2. **How it keeps your secret safe** — short, checkable claims, each pointing at the code or config
    that proves it: generated with `crypto.getRandomValues` (`src/core/random.ts`); unbiased selection
    by rejection sampling; the page cannot make network requests (`connect-src 'none'` in
-   `vercel.json`); no analytics or third-party scripts; nothing stored except the format preference.
+   `vercel.json`); no analytics or third-party scripts; nothing stored except the format and PIN
+   length — Custom Password and Memorable options reset on reload.
    Plus the stated limitations: clipboard clearing depends on the browser; JS strings cannot be wiped
    from memory; a compromised browser or extension is out of scope.
-3. **Formats** — the six-format table with entropy, and one line on the Password exclusions.
+3. **Formats** — the six-format table with entropy, one line on the Password exclusions, and the
+   Custom Password and Memorable options with their defaults and ranges.
 4. **Development** — prerequisites (Node 24 LTS, from `.nvmrc`), `npm ci`, the scripts, the note
    that the CSP is enforced in `preview`, not `dev`, and a "Specs and plans" paragraph: the naming
    scheme, the binding spec, and a pointer to `AGENTS.md`.
@@ -642,6 +662,8 @@ pyrgus-web/
 │   │   ├── GeneratorCard.tsx
 │   │   ├── FormatPicker.tsx
 │   │   ├── PinLengthControl.tsx
+│   │   ├── CustomPasswordControl.tsx  length slider and Include symbols switch
+│   │   ├── MemorableControl.tsx       word-count slider and separator radio group
 │   │   ├── SecretDisplay.tsx
 │   │   ├── AppsDialog.tsx
 │   │   ├── WidgetMockup.tsx
@@ -655,7 +677,7 @@ pyrgus-web/
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── index.css
-├── e2e/                     Playwright smoke test
+├── e2e/                     Playwright: smoke, layout, password options, build output
 ├── index.html
 ├── vercel.json
 ├── vite.config.ts
@@ -711,6 +733,14 @@ Tests are colocated with the code they test (`*.test.ts` / `*.test.tsx`); Playwr
 ### Component tests (Vitest + jsdom + Testing Library)
 
 - Picker switches formats; the PIN control appears only for PIN; changing PIN length regenerates.
+- `GeneratorCard.options.test.tsx`: Custom Password and Memorable controls appear only for their
+  format with the default values, bounds, names and value text; every option regenerates and updates
+  the entropy; settings survive switching away and back; all three separators join correctly, with a
+  scripted fixture proving internal hyphens and a space-separated result render, speak and copy
+  exactly; a change clears Copied and copy-failed feedback; a same-value event neither regenerates
+  nor re-announces; the live region never contains the secret.
+- With generation failing, a saved Custom Password or Memorable selection keeps its controls usable
+  and stays fail-closed after a change. `spell` names spaces.
 - Copy calls `navigator.clipboard.writeText`; "Copied" appears then clears.
 - Persisted settings restore, including saved `standard`, `strong` and `memorable`; invalid stored
   values fall back to defaults; the password is never written to `localStorage`.
@@ -746,7 +776,18 @@ production share one source:
 - **Layout** (`e2e/layout.spec.ts`): the generator is vertically centred between header and footer
   at 1280 × 900; it is 32rem wide with a 30 px secret from 640 px and unchanged at 320 px; Secret 256
   wraps without overflow at 640 px; at 1280 × 400 the content never overlaps the header or footer and
-  the page scrolls.
+  the page scrolls. Password, Custom Password at 32
+  characters and Memorable at eight words are centred at 1280 × 1200 and never overlap the header or
+  footer at 1280 × 400.
+- **Password options** (`e2e/password-options.spec.ts`), with zero CSP/Trusted Types violations or
+  console errors: both sliders by keyboard (Home, arrows, End) with value, value text, output length
+  and focus checked each step; Space toggles symbols; arrows select every separator, with exact joins
+  and focus kept; Copy returns the exact result, including a space-separated one and its three-digit
+  suffix. Options survive format switches and reset on reload while the saved format restores; only
+  `pyrgus.format` and `pyrgus.pinLength` are stored. At 320 × 640, eight of the longest EFF entry
+  (a test-only `getRandomValues` override injected over DevTools) in every separator, and a
+  32-character Custom Password, show no horizontal overflow or clipping, every control and Copy can
+  be scrolled fully into view, and the copied string matches.
 
 Redirect behavior (`/generate` → `/`) is verified against the Vercel preview deploy, since only
 Vercel applies `vercel.json` redirects.
@@ -760,7 +801,8 @@ On pull requests and pushes to `main`: `npm ci` → `npm run lint` → `npm run 
 
 - securityheaders.com A+ and Mozilla Observatory A+.
 - Lighthouse: 100 for Accessibility and Best Practices.
-- VoiceOver read-through of a Password.
+- VoiceOver read-through of a Password, the Custom Password and Memorable controls, and a
+  space-separated Memorable result (spaces spoken).
 - Clipboard clear in Safari, Chrome and Firefox (Safari expected not to clear — documented).
 
 ## Deployment and cutover
