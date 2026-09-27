@@ -25,14 +25,14 @@ extension is out of scope.
 
 ## Formats
 
-| Format          | Example                                | Entropy                           |
-| --------------- | -------------------------------------- | --------------------------------- |
-| Password        | `khduvn-xeRvpr-mzt7ai`                 | 90.1 bits                         |
-| Custom Password | `k7$Rm2xPq!vLz9Wn#tBc4eYh`             | ~35 to ~199 bits (default ~149)   |
-| Memorable       | `Vivid-Cobra-Mango-Drop-down-Lake-042` | 61.7 to 113.4 bits (default 87.5) |
-| PIN (4 / 6 / 8) | `478210`                               | 13.3 / 19.9 / 26.6 bits           |
-| Secret 128      | 32 hex characters                      | 128 bits                          |
-| Secret 256      | 64 hex characters                      | 256 bits                          |
+| Format          | Example                                   | Entropy                           |
+| --------------- | ----------------------------------------- | --------------------------------- |
+| Password        | `khduvn-xeRvpr-mzt7ai`                    | 90.1 bits                         |
+| Custom Password | `k7$Rm2xPq!vLz9Wn#tBc4eYh`                | ~35 to ~199 bits (default ~149)   |
+| Memorable       | `Velvet-Lantern-Mango-Drop-down-Lake-042` | 61.7 to 113.4 bits (default 87.5) |
+| PIN (4 / 6 / 8) | `478210`                                  | 13.3 / 19.9 / 26.6 bits           |
+| Secret 128      | 32 hex characters                         | 128 bits                          |
+| Secret 256      | 64 hex characters                         | 256 bits                          |
 
 Password never uses the look-alike characters `l`, `O`, `I`, `0` or `1`.
 

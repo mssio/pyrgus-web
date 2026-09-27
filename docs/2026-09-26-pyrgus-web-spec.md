@@ -111,11 +111,11 @@ Samples:
 
 ```
 Password         khduvn-xeRvpr-mzt7ai
-Custom Password  k7$Rm2xPq!vLz9Wn#tBc4eYh         (default: 24 characters, symbols on)
-Memorable        Vivid-Cobra-Mango-Drop-down-Lake-042   (default: six words, hyphen; suffix 000–999)
-PIN         478210
-Secret 128  a3f81c07d9b42e6f5081cc3a7be2149d
-Secret 256  a3f81c07d9b42e6f5081cc3a7be2149d4c7e0b93af15d8206ee9713b5c0da864
+Custom Password  k7$Rm2xPq!vLz9Wn#tBc4eYh                 (default: 24 characters, symbols on)
+Memorable        Velvet-Lantern-Mango-Drop-down-Lake-042  (default: six words, hyphen; suffix 000–999)
+PIN              478210
+Secret 128       a3f81c07d9b42e6f5081cc3a7be2149d
+Secret 256       a3f81c07d9b42e6f5081cc3a7be2149d4c7e0b93af15d8206ee9713b5c0da864
 ```
 
 **Password exclusions.** `l` is dropped from lowercase, `O` and `I` from uppercase, and `0` and `1`

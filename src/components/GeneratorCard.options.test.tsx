@@ -50,7 +50,8 @@ const radio = (name: string) => screen.getByRole('radio', { name })
 afterEach(() => {
   cancelPendingClear()
   localStorage.clear()
-  generateSpy.mockClear()
+  // mockReset also drops any unconsumed scriptNext and restores the pass-through implementation.
+  generateSpy.mockReset()
 })
 
 describe('GeneratorCard — Custom Password and Memorable controls', () => {
