@@ -1,4 +1,4 @@
-# Pyrgus Web — Apps Dialog and Centered Generator — Design
+# Pyrgus Web — Apps Dialog, Centered Generator and Docs Rules — Design
 
 **Date:** 2026-09-26
 **Status:** Draft, awaiting review.
@@ -8,9 +8,14 @@
 
 ## Summary
 
-The page shows only the generator. The "coming soon" apps section below it moves into a dialog,
-opened from the existing pill. The generator column grows slightly and sits in the vertical centre
-of the space between the header and the footer.
+Two changes, shipped together:
+
+1. **Page.** The page shows only the generator. The "coming soon" apps section below it moves into a
+   dialog, opened from the existing pill. The generator column grows slightly and sits in the
+   vertical centre of the space between the header and the footer.
+2. **Repository rules.** `AGENTS.md` (and so `CLAUDE.md`) and `README.md` say exactly how specs and
+   plans are written in `docs/`, and agents stop downloading files or installing packages
+   themselves: they ask the user.
 
 ## Intent
 
@@ -21,13 +26,17 @@ of the space between the header and the footer.
 - "Bigger" means the card and the secret; phones stay as they are today.
 - The dialog is compact: chip, heading, subheading, the four feature points and the widget mockup.
   The phone mockup is dropped.
+- The repo's docs tell agents exactly how specs and plans in `docs/` are written.
+- Agents ask the user to download files into `tmp/`. This covers **all** fetches and installs:
+  agents never download files or install or upgrade packages themselves.
 
 **Assumed (confirm on review):**
 
 - "Toward the centre" means vertical centring between header and footer, on every viewport size.
   When the viewport is too short for the card, the page scrolls as it does today.
 
-**Success looks like:** on load, the page is the header, a centred generator, one pill and the
+**Success looks like:** an agent starting cold, with only `AGENTS.md`, writes a spec and plan with
+the right names, headers and sections, and asks before fetching anything. On load, the page is the header, a centred generator, one pill and the
 footer. Nothing about the apps competes with the password until the user asks for it.
 
 ## Non-goals
@@ -127,6 +136,85 @@ generator is vertically centred and the dialog fits without clipping.
 
 Done means `lint`, `build`, `test` and `test:e2e` all pass.
 
+## Documentation conventions
+
+### Where the rules live
+
+- **`AGENTS.md`** holds the full rules, in two new sections (below). It stays the single source of
+  rules for agents.
+- **`CLAUDE.md`** is unchanged: its one line, `@AGENTS.md`, already loads those rules into Claude
+  Code. Duplicating them there would let the two drift.
+- **`README.md`** gains a short "Specs and plans" paragraph for humans: the naming scheme, that the
+  binding spec is the source of truth, and a pointer to `AGENTS.md` for the full rules.
+
+### New `AGENTS.md` section: "Specs and plans"
+
+**Files.** Everything lives flat in `docs/` (not `docs/superpowers/specs/` or any other default a
+tool suggests):
+
+| File | Purpose |
+|---|---|
+| `docs/YYYY-MM-DD-<topic>-spec.md` | Design: what and why. Approved by the user before any plan. |
+| `docs/YYYY-MM-DD-<topic>-plan.md` | Implementation plan: how, step by step. Written only after the spec is approved. |
+| `docs/YYYY-MM-DD-<topic>-task-overview.md` | Optional: a one-table summary of a long plan. |
+
+`YYYY-MM-DD` is the date the spec was written; the plan and overview reuse the spec's date and
+`<topic>` so the set sorts together. `<topic>` is short kebab-case (`apps-dialog`).
+
+**The binding spec.** `docs/2026-09-26-pyrgus-web-spec.md` always describes the site as built, and
+is the source of truth. It is edited only in the same commit as the code it describes.
+
+**Change specs.** Any later design change gets its own `-spec.md`, which:
+
+- starts with a header: `**Date:**`, `**Status:**` (`Draft` → `Approved YYYY-MM-DD` →
+  `Implemented YYYY-MM-DD`), `**Amends:**` (the binding spec), and `**Plan:**` once one exists;
+- has these sections, in order: Summary; Intent (what the user asked for, kept separate from
+  assumptions); Non-goals; the design, per file or component; Security; Testing; Binding spec
+  changes;
+- ends with **Binding spec changes**: a numbered list of the exact edits to the binding spec (and to
+  `LICENSE`/`README.md` where affected), applied in the implementation commit;
+- never pastes Tailwind Plus source.
+
+Once implemented, a change spec is history: its status becomes `Implemented`, and it is not edited
+again. The binding spec carries the current truth.
+
+**Plans.** A `-plan.md`:
+
+- starts with the header the writing-plans workflow uses (goal, architecture, tech stack), a
+  `**Spec:**` link, and the rule "when the plan and the spec disagree, the spec wins; stop and
+  report";
+- repeats the Global Constraints that bind the work (copied from `AGENTS.md` and the spec);
+- is split into numbered tasks. Each task names the files it creates, modifies or deletes; has
+  checkbox steps (`- [ ]`); writes the failing test before the code; gives exact commands and their
+  expected result; ends with `lint`, `build`, `test` (and `test:e2e`) passing and a commit with its
+  message;
+- never pastes Tailwind Plus source: it says which file to `cp` from `tmp/`.
+
+**Order.** Spec written → user approves the spec → plan written → user reviews the plan and picks
+how to execute it → code. No product code before the spec and plan are approved.
+
+### New `AGENTS.md` section: "Downloads and installs"
+
+Agents never fetch from the network or change installed packages themselves. That covers
+downloading files (Tailwind Plus kits, fonts, wordlists, anything into `tmp/`), `npm install`,
+`npm update`, `npm uninstall`, `npx <package>` of anything not already installed, and
+`npx playwright install`.
+
+Instead the agent stops and asks the user, giving:
+
+1. the exact URL or command (for npm, with `-E` / exact versions);
+2. the destination path (`tmp/<name>` for files);
+3. how the result will be verified: SHA-256, version number, or the `package.json`/lockfile diff.
+
+The agent then waits, and verifies before using the result. If the result does not verify, it
+reports that and does not use it.
+
+**Allowed without asking:** `npm ci` (installs exactly what the committed lockfile says; it is the
+documented setup command and what CI runs) and running tools already installed.
+
+The Layout entry for `tmp/` becomes "gitignored downloads, placed there by the user; never commit".
+The "Tailwind Plus" section keeps its rules about never committing or copying the kits wholesale.
+
 ## Binding spec changes
 
 Applied to `docs/2026-09-26-pyrgus-web-spec.md` in the implementation commit:
@@ -144,4 +232,14 @@ Applied to `docs/2026-09-26-pyrgus-web-spec.md` in the implementation commit:
 6. **Project structure:** `phone-frame.svg`, `AppsSection.tsx` and `PhoneMockup.tsx` are removed;
    `AppsDialog.tsx` is added; the Catalyst list gains `dialog`.
 
-The same commit updates `LICENSE` and the README's licence line to match item 5.
+7. **Repository documentation → `AGENTS.md`:** the contents list gains "Specs and plans" and
+   "Downloads and installs", as described above; item 1 ("What this is") notes that design changes
+   come as change specs that amend this one.
+8. **Repository documentation → `CLAUDE.md`:** unchanged; add a sentence that it deliberately holds
+   no rules of its own.
+9. **Repository documentation → `README.md`:** the Development section gains the "Specs and plans"
+   paragraph.
+
+The same commit updates `LICENSE` and the README's licence line to match item 5. The documentation
+changes (items 7–9, plus `AGENTS.md` and `README.md` themselves) may land in their own commit, since
+they do not depend on the page change.
