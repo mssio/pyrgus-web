@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: weekly
     ignore:
-      # Held majors; see Global Constraints in docs/2026-09-26-pyrgus-web-plan.md.
+      # Held majors; see Dependencies in AGENTS.md.
       - dependency-name: typescript
         update-types: ['version-update:semver-major']
       - dependency-name: '@babel/core'

@@ -1,12 +1,16 @@
-# AGENTS.md — rules for coding agents
+# AGENTS.md — rules for coding agents (Pyrgus Web)
+
+This repo sits in the Pyrgus workspace (`..`). The workspace `AGENTS.md` holds the shared rules:
+one project per task, git workflow, specs and plans, downloads and installs. This file holds the
+rules for this repo's code.
 
 ## What this is
 
 Pyrgus Web: a static, browser-only password and secret-key generator served at https://p.mss.io.
 Secrets are generated in the browser with `crypto.getRandomValues`; the page cannot make network
-requests. The spec at `docs/2026-09-26-pyrgus-web-spec.md` is the source of truth. A change to the
-design updates the spec in the same commit; larger changes come as dated change specs that amend it
-(see "Specs and plans").
+requests. The spec at `../docs/web/2026-09-26-pyrgus-web-spec.md` (outside this repo) is the source
+of truth. A change to the design updates the spec in a paired commit; larger changes come as dated
+change specs that amend it (see the workspace `AGENTS.md`).
 
 ## Commands
 
@@ -18,8 +22,7 @@ design updates the spec in the same commit; larger changes come as dated change 
 - `npm test` — Vitest (unit + component)
 - `npm run test:e2e` — Playwright against `preview`
 
-Before claiming any task done: `lint`, `build` and `test` all pass. From Task 10 onward,
-`test:e2e` must also pass; its configuration and specs do not exist before Task 10.
+Before claiming any task done: `lint`, `build`, `test` and `test:e2e` all pass.
 
 ## Layout
 
@@ -29,50 +32,16 @@ Before claiming any task done: `lint`, `build` and `test` all pass. From Task 10
 - `src/components/` — presentational components; `src/components/catalyst/` is copied Tailwind Plus code
 - `test-support/` — test-only helpers (seeded RNG, chi-squared, Vitest setup)
 - `e2e/` — Playwright specs
-- `docs/` — spec and plan
-- `tmp/` — gitignored downloads, placed there by the user; never commit
+- `../docs/web/` — specs and plans (workspace repo, not this one)
+- `../tmp/web/` — downloads placed there by the user; never commit
 
-## Specs and plans
+## Git workflow
 
-Everything lives flat in `docs/`. Never use a tool's default location (such as
-`docs/superpowers/specs/`).
-
-| File                                       | Purpose                                                                          |
-| ------------------------------------------ | -------------------------------------------------------------------------------- |
-| `docs/YYYY-MM-DD-<topic>-spec.md`          | Design: what and why. Approved by the user before any plan.                      |
-| `docs/YYYY-MM-DD-<topic>-plan.md`          | Implementation plan: how, step by step. Written only after the spec is approved. |
-| `docs/YYYY-MM-DD-<topic>-task-overview.md` | Optional one-table summary of a long plan.                                       |
-
-`YYYY-MM-DD` is the date the spec was written; the plan and overview reuse the spec's date and
-`<topic>`. `<topic>` is short kebab-case (`apps-dialog`).
-
-**The binding spec**, `docs/2026-09-26-pyrgus-web-spec.md`, always describes the site as built. Edit
-it only in the same commit as the code it describes.
-
-**A change spec** (any later `-spec.md`):
-
-- starts with `**Date:**`, `**Status:**` (`Draft` → `Approved YYYY-MM-DD` → `Implemented YYYY-MM-DD`),
-  `**Amends:**` (the binding spec) and, once one exists, `**Plan:**`;
-- has these sections, in order: Summary; Intent (what the user asked for, kept apart from
-  assumptions); Non-goals; the design, per file or component; Security; Testing; Binding spec changes;
-- ends with **Binding spec changes**: a numbered list of the exact edits to the binding spec (and to
-  `LICENSE` / `README.md` where affected), applied in the implementation commits;
-- is not edited after its status becomes `Implemented`. The binding spec carries the current truth.
-
-**A plan** (`-plan.md`):
-
-- starts with the writing-plans header (goal, architecture, tech stack), a `**Spec:**` line, and the
-  rule "when the plan and the spec disagree, the spec wins; stop and report";
-- repeats the Global Constraints that bind the work, copied from this file and the spec;
-- is split into numbered tasks. Each task lists the files it creates, modifies or deletes; uses
-  checkbox steps (`- [ ]`); writes the failing test before the code; gives exact commands and their
-  expected result; and ends with `lint`, `build`, `test` and `test:e2e` passing and a commit with
-  its message.
-
-Neither ever pastes Tailwind Plus source; a plan says which file to `cp` from `tmp/`.
-
-**Order:** spec written → user approves the spec → plan written → user reviews the plan and picks how
-to execute it → code. No product code before both are approved.
+- Never commit to `main`. Cut a feature branch (`feat/…`, `fix/…`, `chore/…`, `docs/…`) from an
+  up-to-date `origin/main`.
+- Finish every task by pushing the branch and opening a **draft** PR with `gh pr create --draft`.
+  The user marks it ready and merges (squash).
+- Spec and plan edits are committed in the workspace repo, paired with the code commits here.
 
 ## Security rules (non-negotiable)
 
@@ -98,26 +67,13 @@ to execute it → code. No product code before both are approved.
 
 ## Downloads and installs
 
-Agents never fetch from the network or change installed packages themselves. That covers
-downloading files (Tailwind Plus kits, fonts, wordlists, anything into `tmp/`), `npm install`,
-`npm update`, `npm uninstall`, `npx <package>` for anything not already installed, and
-`npx playwright install`.
-
-Instead, stop and ask the user, giving:
-
-1. the exact URL or command (npm commands with `-E`, exact versions);
-2. the destination path (`tmp/<name>` for files);
-3. how the result will be verified: SHA-256, version number, or the `package.json` / lockfile diff.
-
-Wait, then verify before using the result. If it does not verify, say so and do not use it.
-
-Allowed without asking: `npm ci` (installs exactly what the committed lockfile says) and running
-tools that are already installed.
+Follow the workspace `AGENTS.md`: agents never download files or install, update or uninstall
+packages; they ask the user. Files go to `../tmp/web/`. `npm ci` is allowed.
 
 ## Tailwind Plus
 
-- The Catalyst and Pocket downloads live in gitignored `tmp/`. Never commit them, never copy them
-  wholesale, never paste their source into docs.
+- The Catalyst and Pocket downloads live in `../tmp/web/`, outside this repo. Never commit them,
+  never copy them wholesale, never paste their source into docs.
 - Copy a single component into `src/components/catalyst/` only when it is used.
 - Any Tailwind Plus-derived file outside `src/components/catalyst/` must be listed in `LICENSE`'s
   exclusion notice.
@@ -135,9 +91,9 @@ tools that are already installed.
 ## Cross-platform parity
 
 `src/core/test-vectors.json` mirrors the native Pyrgus app. Changing alphabets, formats, entropy or
-the wordlist means updating the vectors **and** telling the user the native repo needs the same
-change. Agents do not edit the native repo.
+the wordlist means updating the vectors **and** telling the user `pyrgus-app` needs the same change.
+That change is a separate task; never edit `pyrgus-app` while working here.
 
 ## Scope
 
-Work only inside this repository.
+Change code only inside this repository; docs go in `../docs/web/`.
