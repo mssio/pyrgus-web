@@ -10,7 +10,8 @@ export function Footer() {
           Memorable passwords use the <TextLink href={EFF_WORDLIST_URL}>EFF long wordlist</TextLink> (CC BY 3.0 US).
         </p>
         <p>
-          © 2026 mss.io · <TextLink href={REPO_URL}>Source code</TextLink>
+          © 2026 mss.io · <TextLink href={REPO_URL}>Source code</TextLink> ·{' '}
+          <TextLink href="/privacy">Privacy</TextLink>
         </p>
       </div>
     </footer>

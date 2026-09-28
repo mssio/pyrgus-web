@@ -105,3 +105,20 @@ test.describe('without JavaScript', () => {
     )
   })
 })
+
+test('the footer on the generator page links to the policy', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('contentinfo').getByRole('link', { name: 'Privacy' }).click()
+  await expect(page).toHaveURL(/\/privacy$/)
+  await expect(heading(page)).toBeVisible()
+  expect(await violations(page)).toEqual([])
+})
+
+test('the header takes you back to a working generator', async ({ page }) => {
+  await page.goto('/privacy')
+  await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy')
+  await page.getByRole('banner').getByRole('link', { name: 'Pyrgus' }).click()
+  await expect(page).toHaveURL(/\/$/)
+  await expect(page.getByTestId('secret')).toHaveText(/^[^-]{6}-[^-]{6}-[^-]{6}$/)
+  expect(await violations(page)).toEqual([])
+})

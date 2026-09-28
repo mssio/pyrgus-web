@@ -32,6 +32,11 @@ describe('App', () => {
     expect(screen.getByText('Passwords are generated in your browser and never leave it.')).toBeInTheDocument()
   })
 
+  it('links the privacy policy from the footer', () => {
+    render(<App />)
+    expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy')
+  })
+
   it('opens the apps dialog from the pill and closes it with Escape, returning focus to the pill', async () => {
     const user = userEvent.setup()
     render(<App />)
