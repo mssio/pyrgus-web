@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
 
@@ -10,12 +10,28 @@ const files = (dir: string) =>
     .filter((d) => d.isFile())
     .map((d) => join(d.parentPath, d.name))
 
-test('index.html has no inline scripts and no style attributes', () => {
-  const html = readFileSync(join(DIST, 'index.html'), 'utf8')
-  const scriptTags = html.match(/<script\b[^>]*>/g) ?? []
-  expect(scriptTags.length).toBeGreaterThan(0)
-  for (const tag of scriptTags) expect(tag).toMatch(/\bsrc="/)
-  expect(html).not.toMatch(/\sstyle="/)
+test('both pages are built', () => {
+  expect(existsSync(join(DIST, 'index.html'))).toBe(true)
+  expect(existsSync(join(DIST, 'privacy.html'))).toBe(true)
+})
+
+test('no built HTML file has an inline script or a style attribute', () => {
+  const pages = files(DIST).filter((f) => f.endsWith('.html'))
+  expect(pages.length).toBeGreaterThanOrEqual(3) // index, privacy, 404
+  for (const file of pages) {
+    const html = readFileSync(file, 'utf8')
+    for (const tag of html.match(/<script\b[^>]*>/g) ?? []) expect(tag, file).toMatch(/\bsrc="/)
+    expect(html, file).not.toMatch(/\sstyle="/)
+  }
+  for (const entry of ['index.html', 'privacy.html']) {
+    const html = readFileSync(join(DIST, entry), 'utf8')
+    expect((html.match(/<script\b[^>]*>/g) ?? []).length, entry).toBeGreaterThan(0)
+  }
+})
+
+test("privacy.html's noscript summary gives the contact address", () => {
+  const html = readFileSync(join(DIST, 'privacy.html'), 'utf8')
+  expect(html).toMatch(/<noscript>[\s\S]*privacy@e\.mss\.io[\s\S]*<\/noscript>/)
 })
 
 // Binary formats we ship (images, fonts): never text, and reading them as utf8 would produce
