@@ -19,6 +19,11 @@ export default defineConfig({
     modulePreload: { polyfill: false },
     // Never inline assets as data: URIs; img-src/font-src 'self' would block them.
     assetsInlineLimit: 0,
+    // Two pages: the generator and the privacy policy. The privacy page shares React, the header, footer
+    // and CSS, but never loads the generator.
+    rolldownOptions: {
+      input: { main: 'index.html', privacy: 'privacy.html' },
+    },
   },
   preview: { headers: securityHeaders },
   test: {

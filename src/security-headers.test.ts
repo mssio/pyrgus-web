@@ -51,4 +51,8 @@ describe('vercel.json', () => {
   it('permanently redirects /generate to /', () => {
     expect(vercel.redirects).toEqual([{ source: '/generate', destination: '/', permanent: true }])
   })
+
+  it('serves clean URLs, so /privacy maps to privacy.html', () => {
+    expect(vercel.cleanUrls).toBe(true)
+  })
 })
