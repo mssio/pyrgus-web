@@ -11,10 +11,32 @@ describe('PrivacyPolicy', () => {
     expect(screen.getByText('Effective 28 September 2026')).toBeInTheDocument()
   })
 
-  it('has a section per platform plus Children, Changes and Contact', () => {
+  it('has a section per platform plus Contacting us, Children, Changes and Contact', () => {
     render(<PrivacyPolicy />)
     const h2s = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
-    expect(h2s).toEqual(['Pyrgus Web', 'Pyrgus for iPhone, iPad and Mac', 'Children', 'Changes', 'Contact'])
+    expect(h2s).toEqual([
+      'Pyrgus Web',
+      'Pyrgus for iPhone, iPad and Mac',
+      'Contacting us',
+      'Children',
+      'Changes',
+      'Contact',
+    ])
+  })
+
+  it('explains what happens when you email us, and links the support page', () => {
+    render(<PrivacyPolicy />)
+    expect(
+      screen.getByText(
+        /we receive your email address and whatever you write\. We use it only to reply to you, and we don't share it\./,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /The support page itself sends nothing: it opens your own mail app with the message filled in\./,
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'support page' })).toHaveAttribute('href', '/support')
   })
 
   it('gives the privacy contact as a mailto link', () => {

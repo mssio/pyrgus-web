@@ -37,6 +37,11 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy')
   })
 
+  it('links the support page from the footer', () => {
+    render(<App />)
+    expect(screen.getByRole('link', { name: 'Support' })).toHaveAttribute('href', '/support')
+  })
+
   it('opens the apps dialog from the pill and closes it with Escape, returning focus to the pill', async () => {
     const user = userEvent.setup()
     render(<App />)

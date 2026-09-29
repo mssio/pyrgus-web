@@ -87,6 +87,14 @@ export function PrivacyPolicy() {
         </List>
       </Section>
 
+      <Section title="Contacting us">
+        <Text className="mt-3">
+          If you email us, for example from the <TextLink href="/support">support page</TextLink>, we receive your email
+          address and whatever you write. We use it only to reply to you, and we don't share it. The support page itself
+          sends nothing: it opens your own mail app with the message filled in.
+        </Text>
+      </Section>
+
       <Section title="Children">
         <Text className="mt-3">Pyrgus collects no personal information from anyone, including children.</Text>
       </Section>

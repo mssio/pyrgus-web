@@ -11,7 +11,7 @@ export function Footer() {
         </p>
         <p>
           © 2026 mss.io · <TextLink href={REPO_URL}>Source code</TextLink> ·{' '}
-          <TextLink href="/privacy">Privacy</TextLink>
+          <TextLink href="/privacy">Privacy</TextLink> · <TextLink href="/support">Support</TextLink>
         </p>
       </div>
     </footer>
