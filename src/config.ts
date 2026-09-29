@@ -5,3 +5,5 @@ export const PRIVACY_EMAIL = 'privacy@e.mss.io'
 export const PRIVACY_EFFECTIVE_DATE = '28 September 2026'
 export const VERCEL_PRIVACY_URL = 'https://vercel.com/legal/privacy-policy'
 export const APPLE_PRIVACY_URL = 'https://www.apple.com/legal/privacy/'
+
+export const SUPPORT_EMAIL = 'support@e.mss.io'
