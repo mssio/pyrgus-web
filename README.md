@@ -18,7 +18,8 @@ Every claim below points at the code or config that makes it true.
   `localStorage`; see [`src/lib/preferences.ts`](src/lib/preferences.ts). Custom Password and
   Memorable options last only for the page session and reset on reload.
 
-Read the full [privacy policy](https://p.mss.io/privacy), which covers the website and the app.
+Read the full [privacy policy](https://p.mss.io/privacy), which covers the website and the app. Need
+help? Use the [support page](https://p.mss.io/support) or email support@e.mss.io.
 
 **Limitations.** Clearing the clipboard after 90 s depends on the browser: it happens only while the
 tab is open and focused, and only where the browser lets the page read the clipboard (Safari does
@@ -80,7 +81,7 @@ npm run test:e2e   # Playwright on the production build: zero CSP violations, ke
 
 ## Deployment
 
-Vercel builds pull requests as previews and `main` as production. Security headers, clean URLs (`/privacy`)
+Vercel builds pull requests as previews and `main` as production. Security headers, clean URLs (`/privacy`, `/support`)
 and the `/generate` → `/` redirect live in [`vercel.json`](vercel.json).
 
 ## Pyrgus for iPhone, iPad & Mac
