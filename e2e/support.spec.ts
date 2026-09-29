@@ -156,3 +156,20 @@ test.describe('without JavaScript', () => {
     )
   })
 })
+
+test('the footer links to the support page from the generator and the privacy policy', async ({ page }) => {
+  for (const from of ['/', '/privacy']) {
+    await page.goto(from)
+    await page.getByRole('contentinfo').getByRole('link', { name: 'Support' }).click()
+    await expect(page).toHaveURL(/\/support$/)
+    await expect(heading(page)).toBeVisible()
+    expect(await violations(page)).toEqual([])
+  }
+})
+
+test('the privacy policy links to the support page', async ({ page }) => {
+  await page.goto('/privacy')
+  await page.getByRole('main').getByRole('link', { name: 'support page' }).click()
+  await expect(page).toHaveURL(/\/support$/)
+  await expect(heading(page)).toBeVisible()
+})
