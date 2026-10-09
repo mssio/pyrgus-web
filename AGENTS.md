@@ -39,8 +39,15 @@ Before claiming any task done: `lint`, `build`, `test` and `test:e2e` all pass.
 
 - Never commit to `main`. Cut a feature branch (`feat/…`, `fix/…`, `chore/…`, `docs/…`) from an
   up-to-date `origin/main`.
-- Finish every task by pushing the branch and opening a **draft** PR with `gh pr create --draft`.
-  The user marks it ready and merges (squash).
+- Finish a feature task by pushing its branch. **Open no PR**; feature branches wait for a release.
+- A release collects finished feature branches: cut `release/<version>` from `origin/main`, merge
+  each feature branch into it with `git merge --no-ff`, commit the version bump (`version` in
+  `package.json` and `package-lock.json`), push, and open a **draft** PR with
+  `gh pr create --draft`. Only release branches get a PR. The user marks it ready and merges
+  (squash).
+- After the merge, clean up before tagging: delete the release branch and the feature branches it
+  merged, local and remote, then `git worktree prune` and `git fetch --prune`. Then tag the merge
+  commit `v<version>` (annotated, pushed, never moved). Full rules: the workspace `AGENTS.md`.
 - Spec and plan edits are committed in the workspace repo, paired with the code commits here.
 
 ## Security rules (non-negotiable)
