@@ -8,9 +8,9 @@ rules for this repo's code.
 
 Pyrgus Web: a static, browser-only password and secret-key generator served at https://p.mss.io.
 Secrets are generated in the browser with `crypto.getRandomValues`; the page cannot make network
-requests. The spec at `../docs/web/2026-09-26-pyrgus-web-spec.md` (outside this repo) is the source
-of truth. A change to the design updates the spec in a paired commit; larger changes come as dated
-change specs that amend it (see the workspace `AGENTS.md`).
+requests. The spec at `../docs/web/specs/2026-09-26-pyrgus-web-spec.md` (outside this repo) is the
+source of truth. A change to the design updates the spec in a paired commit; larger changes come as
+dated change specs that amend it (see the workspace `AGENTS.md`).
 
 ## Commands
 
@@ -32,7 +32,7 @@ Before claiming any task done: `lint`, `build`, `test` and `test:e2e` all pass.
 - `src/components/` — presentational components; `src/components/catalyst/` is copied Tailwind Plus code
 - `test-support/` — test-only helpers (seeded RNG, chi-squared, Vitest setup)
 - `e2e/` — Playwright specs
-- `../docs/web/` — specs and plans (workspace repo, not this one)
+- `../docs/web/` — `specs/` and `plans/` (workspace repo, not this one)
 - `../tmp/web/` — downloads placed there by the user; never commit
 
 ## Git workflow
@@ -96,4 +96,5 @@ That change is a separate task; never edit `pyrgus-app` while working here.
 
 ## Scope
 
-Change code only inside this repository; docs go in `../docs/web/`.
+Change code only inside this repository; specs go in `../docs/web/specs/`, plans in
+`../docs/web/plans/`.
