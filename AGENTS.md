@@ -29,7 +29,8 @@ Before claiming any task done: `lint`, `build`, `test` and `test:e2e` all pass.
 - `src/core/` — framework-free generator (randomness, formats, wordlist, entropy)
 - `src/lib/` — browser helpers (clipboard, preferences, spoken form)
 - `src/hooks/usePyrgus.ts` — all UI state
-- `src/components/` — presentational components; `src/components/catalyst/` is copied Tailwind Plus code
+- `src/components/` — presentational components; `src/components/catalyst/` is copied Tailwind Plus
+  code
 - `test-support/` — test-only helpers (seeded RNG, chi-squared, Vitest setup)
 - `e2e/` — Playwright specs
 - `../docs/web/` — `specs/` and `plans/` (workspace repo, not this one)
@@ -65,8 +66,8 @@ branch from `develop` and merge back with no PR; releases and hotfixes end in a 
 ## Dependencies
 
 - Exact versions only (`.npmrc` has `save-exact=true`).
-- Held majors: `typescript` 6.x (typescript-eslint needs `<6.1.0`), `@babel/core` 7.x (React Compiler),
-  `@types/node` 24.x (matches Node 24). Dependabot ignores their major bumps.
+- Held majors: `typescript` 6.x (typescript-eslint needs `<6.1.0`), `@babel/core` 7.x (React
+  Compiler), `@types/node` 24.x (matches Node 24). Dependabot ignores their major bumps.
 - Runtime dependencies are `react`, `react-dom`, `@headlessui/react`, `clsx`. Ask before adding any
   other runtime dependency.
 
@@ -77,8 +78,8 @@ packages; they ask the user. Files go to `../.private/web/`. `npm ci` is allowed
 
 ## Tailwind Plus
 
-- The Catalyst and Pocket downloads live in `../.private/web/`, outside this repo. Never commit them,
-  never copy them wholesale, never paste their source into docs.
+- The Catalyst and Pocket downloads live in `../.private/web/`, outside this repo. Never commit
+  them, never copy them wholesale, never paste their source into docs.
 - Copy a single component into `src/components/catalyst/` only when it is used.
 - Any Tailwind Plus-derived file outside `src/components/catalyst/` must be listed in `LICENSE`'s
   exclusion notice.
