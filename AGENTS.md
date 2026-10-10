@@ -8,9 +8,9 @@ rules for this repo's code.
 
 Pyrgus Web: a static, browser-only password and secret-key generator served at https://p.mss.io.
 Secrets are generated in the browser with `crypto.getRandomValues`; the page cannot make network
-requests. The spec at `../docs/web/2026-09-26-pyrgus-web-spec.md` (outside this repo) is the source
-of truth. A change to the design updates the spec in a paired commit; larger changes come as dated
-change specs that amend it (see the workspace `AGENTS.md`).
+requests. The spec at `../docs/web/specs/2026-09-26-pyrgus-web-spec.md` (outside this repo) is the
+source of truth. A change to the design updates the spec in a paired commit; larger changes come as
+dated change specs that amend it (see the workspace `AGENTS.md`).
 
 ## Commands
 
@@ -32,15 +32,20 @@ Before claiming any task done: `lint`, `build`, `test` and `test:e2e` all pass.
 - `src/components/` — presentational components; `src/components/catalyst/` is copied Tailwind Plus code
 - `test-support/` — test-only helpers (seeded RNG, chi-squared, Vitest setup)
 - `e2e/` — Playwright specs
-- `../docs/web/` — specs and plans (workspace repo, not this one)
-- `../tmp/web/` — downloads placed there by the user; never commit
+- `../docs/web/` — `specs/` and `plans/` (workspace repo, not this one)
+- `../.private/web/` — downloads placed there by the user; never commit
 
 ## Git workflow
 
-- Never commit to `main`. Cut a feature branch (`feat/…`, `fix/…`, `chore/…`, `docs/…`) from an
-  up-to-date `origin/main`.
-- Finish every task by pushing the branch and opening a **draft** PR with `gh pr create --draft`.
-  The user marks it ready and merges (squash).
+Standard Git Flow, the same as `pyrgus-app`; the full rules (feature, release, hotfix, after the
+merge, versions, changelog, no worktrees) are in the workspace `AGENTS.md`. In short: features
+branch from `develop` and merge back with no PR; releases and hotfixes end in a draft PR into
+`main`. Never commit work to `main` or `develop` directly.
+
+- **Version:** `version` in `package.json` and `package-lock.json`. `develop` carries the next
+  version; the production commit `chore: release <version>` sets the released one.
+- **Changelog:** every feature adds its visitor-facing change under `[Unreleased]` in
+  `CHANGELOG.md` before merging into `develop`.
 - Spec and plan edits are committed in the workspace repo, paired with the code commits here.
 
 ## Security rules (non-negotiable)
@@ -68,11 +73,11 @@ Before claiming any task done: `lint`, `build`, `test` and `test:e2e` all pass.
 ## Downloads and installs
 
 Follow the workspace `AGENTS.md`: agents never download files or install, update or uninstall
-packages; they ask the user. Files go to `../tmp/web/`. `npm ci` is allowed.
+packages; they ask the user. Files go to `../.private/web/`. `npm ci` is allowed.
 
 ## Tailwind Plus
 
-- The Catalyst and Pocket downloads live in `../tmp/web/`, outside this repo. Never commit them,
+- The Catalyst and Pocket downloads live in `../.private/web/`, outside this repo. Never commit them,
   never copy them wholesale, never paste their source into docs.
 - Copy a single component into `src/components/catalyst/` only when it is used.
 - Any Tailwind Plus-derived file outside `src/components/catalyst/` must be listed in `LICENSE`'s
@@ -96,4 +101,5 @@ That change is a separate task; never edit `pyrgus-app` while working here.
 
 ## Scope
 
-Change code only inside this repository; docs go in `../docs/web/`.
+Change code only inside this repository; specs go in `../docs/web/specs/`, plans in
+`../docs/web/plans/`.
