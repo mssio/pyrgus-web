@@ -33,27 +33,19 @@ Before claiming any task done: `lint`, `build`, `test` and `test:e2e` all pass.
 - `test-support/` — test-only helpers (seeded RNG, chi-squared, Vitest setup)
 - `e2e/` — Playwright specs
 - `../docs/web/` — `specs/` and `plans/` (workspace repo, not this one)
-- `../tmp/web/` — downloads placed there by the user; never commit
+- `../.private/web/` — downloads placed there by the user; never commit
 
 ## Git workflow
 
-Standard Git Flow; the full rules are in the workspace `AGENTS.md`. `main` holds released versions
-only and `develop` the next one; never commit to either directly. The user names each task a
-feature, a release or a hotfix.
+Standard Git Flow, the same as `pyrgus-app`; the full rules (feature, release, hotfix, after the
+merge, versions, changelog, no worktrees) are in the workspace `AGENTS.md`. In short: features
+branch from `develop` and merge back with no PR; releases and hotfixes end in a draft PR into
+`main`. Never commit work to `main` or `develop` directly.
 
-- **Feature:** `feature/<topic>` from an up-to-date `origin/develop`. When done, merge it into
-  `develop` with `git merge --no-ff`, push `develop`, and delete the feature branch, local and
-  remote. **No PR.**
-- **Release** (the user gives the version): `release/<version>` from `origin/develop`. Any tweaks,
-  then the production commit, `chore: release <version>`: `version` in `package.json` and
-  `package-lock.json`. Push and open a **draft** PR into `main`
-  (`gh pr create --draft --base main`).
-- **Hotfix** (the user gives the version and the fix): `hotfix/<version>` from `origin/main`. The
-  fix, then the production commit as for a release. Push and open a **draft** PR into `main`.
-- The user merges release and hotfix PRs on GitHub with **Create a merge commit**, never squash.
-  Then: tag the merge commit on `main` `v<version>` (annotated, message `Pyrgus Web <version>`,
-  pushed, never moved); merge `main` into `develop` with `--no-ff`; push `develop`; delete the
-  release or hotfix branch, local and remote; `git fetch --prune` and `git worktree prune`.
+- **Version:** `version` in `package.json` and `package-lock.json`. `develop` carries the next
+  version; the production commit `chore: release <version>` sets the released one.
+- **Changelog:** every feature adds its visitor-facing change under `[Unreleased]` in
+  `CHANGELOG.md` before merging into `develop`.
 - Spec and plan edits are committed in the workspace repo, paired with the code commits here.
 
 ## Security rules (non-negotiable)
@@ -81,11 +73,11 @@ feature, a release or a hotfix.
 ## Downloads and installs
 
 Follow the workspace `AGENTS.md`: agents never download files or install, update or uninstall
-packages; they ask the user. Files go to `../tmp/web/`. `npm ci` is allowed.
+packages; they ask the user. Files go to `../.private/web/`. `npm ci` is allowed.
 
 ## Tailwind Plus
 
-- The Catalyst and Pocket downloads live in `../tmp/web/`, outside this repo. Never commit them,
+- The Catalyst and Pocket downloads live in `../.private/web/`, outside this repo. Never commit them,
   never copy them wholesale, never paste their source into docs.
 - Copy a single component into `src/components/catalyst/` only when it is used.
 - Any Tailwind Plus-derived file outside `src/components/catalyst/` must be listed in `LICENSE`'s
