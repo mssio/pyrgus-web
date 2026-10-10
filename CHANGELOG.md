@@ -6,6 +6,8 @@ All notable changes to Pyrgus Web (https://p.mss.io) are recorded here. The form
 
 ## [Unreleased]
 
+No changes for visitors. Updates the build and test tools.
+
 ## [1.0.1] - 2026-10-09
 
 No changes for visitors. Adds this changelog and the release checks behind it.
