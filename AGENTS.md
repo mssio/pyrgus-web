@@ -8,9 +8,9 @@ rules for this repo's code.
 
 Pyrgus Web: a static, browser-only password and secret-key generator served at https://p.mss.io.
 Secrets are generated in the browser with `crypto.getRandomValues`; the page cannot make network
-requests. The spec at `../docs/web/2026-09-26-pyrgus-web-spec.md` (outside this repo) is the source
-of truth. A change to the design updates the spec in a paired commit; larger changes come as dated
-change specs that amend it (see the workspace `AGENTS.md`).
+requests. The spec at `../docs/web/specs/2026-09-26-pyrgus-web-spec.md` (outside this repo) is the
+source of truth. A change to the design updates the spec in a paired commit; larger changes come as
+dated change specs that amend it (see the workspace `AGENTS.md`).
 
 ## Commands
 
@@ -32,15 +32,26 @@ Before claiming any task done: `lint`, `build`, `test` and `test:e2e` all pass.
 - `src/components/` — presentational components; `src/components/catalyst/` is copied Tailwind Plus code
 - `test-support/` — test-only helpers (seeded RNG, chi-squared, Vitest setup)
 - `e2e/` — Playwright specs
-- `../docs/web/` — specs and plans (workspace repo, not this one)
+- `../docs/web/` — `specs/` and `plans/` (workspace repo, not this one)
 - `../tmp/web/` — downloads placed there by the user; never commit
 
 ## Git workflow
 
-- Never commit to `main`. Cut a feature branch (`feat/…`, `fix/…`, `chore/…`, `docs/…`) from an
-  up-to-date `origin/main`.
-- Finish every task by pushing the branch and opening a **draft** PR with `gh pr create --draft`.
-  The user marks it ready and merges (squash).
+- Never commit to `main`. When work for the next version starts, cut `release/<version>` (the
+  `package.json` version, e.g. `release/1.0.3`) from an up-to-date `origin/main`. Branch names and
+  tags use the version only.
+- Cut each feature branch (`feat/…`, `fix/…`, `chore/…`, `docs/…`) from the open release branch
+  (from `origin/main` if none is open). Finish a feature task by pushing it and merging it into the
+  release branch with `git merge --no-ff`. **Open no PR.**
+- The last commit on a release branch is the version bump (`version` in `package.json` and
+  `package-lock.json`). Push it and open a **draft** PR with `gh pr create --draft`; only release
+  branches get a PR. The user marks it ready and merges it with a **merge commit**, not squash.
+- After the merge, clean up before tagging: delete the release branch and the feature branches it
+  merged, local and remote, then `git worktree prune` and `git fetch --prune`. Then tag the merge
+  commit `v<version>` (annotated, pushed, never moved).
+- Hotfix for the live version while a release branch is open: `release/<next patch>` from `main`
+  with only the fix; the open release branch moves to the patch after it. Full rules: the workspace
+  `AGENTS.md`.
 - Spec and plan edits are committed in the workspace repo, paired with the code commits here.
 
 ## Security rules (non-negotiable)
@@ -96,4 +107,5 @@ That change is a separate task; never edit `pyrgus-app` while working here.
 
 ## Scope
 
-Change code only inside this repository; docs go in `../docs/web/`.
+Change code only inside this repository; specs go in `../docs/web/specs/`, plans in
+`../docs/web/plans/`.
