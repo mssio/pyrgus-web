@@ -6,6 +6,8 @@ All notable changes to Pyrgus Web (https://p.mss.io) are recorded here. The form
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-09
+
 No changes for visitors. Adds this changelog and the release checks behind it.
 
 ## [1.0.0] - 2026-09-28
@@ -19,5 +21,6 @@ No changes for visitors. Adds this changelog and the release checks behind it.
 - A privacy policy at `/privacy`, covering the site and the apps.
 - A support page at `/support`; its form opens your own mail app.
 
-[Unreleased]: https://github.com/mssio/pyrgus-web/compare/v1.0.0...develop
+[Unreleased]: https://github.com/mssio/pyrgus-web/compare/v1.0.1...develop
+[1.0.1]: https://github.com/mssio/pyrgus-web/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/mssio/pyrgus-web/releases/tag/v1.0.0
