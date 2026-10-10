@@ -37,21 +37,23 @@ Before claiming any task done: `lint`, `build`, `test` and `test:e2e` all pass.
 
 ## Git workflow
 
-- Never commit to `main`. When work for the next version starts, cut `release/<version>` (the
-  `package.json` version, e.g. `release/1.0.3`) from an up-to-date `origin/main`. Branch names and
-  tags use the version only.
-- Cut each feature branch (`feat/…`, `fix/…`, `chore/…`, `docs/…`) from the open release branch
-  (from `origin/main` if none is open). Finish a feature task by pushing it and merging it into the
-  release branch with `git merge --no-ff`. **Open no PR.**
-- The last commit on a release branch is the version bump (`version` in `package.json` and
-  `package-lock.json`). Push it and open a **draft** PR with `gh pr create --draft`; only release
-  branches get a PR. The user marks it ready and merges it with a **merge commit**, not squash.
-- After the merge, clean up before tagging: delete the release branch and the feature branches it
-  merged, local and remote, then `git worktree prune` and `git fetch --prune`. Then tag the merge
-  commit `v<version>` (annotated, pushed, never moved).
-- Hotfix for the live version while a release branch is open: `release/<next patch>` from `main`
-  with only the fix; the open release branch moves to the patch after it. Full rules: the workspace
-  `AGENTS.md`.
+Standard Git Flow; the full rules are in the workspace `AGENTS.md`. `main` holds released versions
+only and `develop` the next one; never commit to either directly. The user names each task a
+feature, a release or a hotfix.
+
+- **Feature:** `feature/<topic>` from an up-to-date `origin/develop`. When done, merge it into
+  `develop` with `git merge --no-ff`, push `develop`, and delete the feature branch, local and
+  remote. **No PR.**
+- **Release** (the user gives the version): `release/<version>` from `origin/develop`. Any tweaks,
+  then the production commit, `chore: release <version>`: `version` in `package.json` and
+  `package-lock.json`. Push and open a **draft** PR into `main`
+  (`gh pr create --draft --base main`).
+- **Hotfix** (the user gives the version and the fix): `hotfix/<version>` from `origin/main`. The
+  fix, then the production commit as for a release. Push and open a **draft** PR into `main`.
+- The user merges release and hotfix PRs on GitHub with **Create a merge commit**, never squash.
+  Then: tag the merge commit on `main` `v<version>` (annotated, message `Pyrgus Web <version>`,
+  pushed, never moved); merge `main` into `develop` with `--no-ff`; push `develop`; delete the
+  release or hotfix branch, local and remote; `git fetch --prune` and `git worktree prune`.
 - Spec and plan edits are committed in the workspace repo, paired with the code commits here.
 
 ## Security rules (non-negotiable)
