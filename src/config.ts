@@ -1,3 +1,5 @@
+export const APP_VERSION = __APP_VERSION__
+export const APP_STORE_URL = 'https://apps.apple.com/app/pyrgus-password-generator/id6816824499'
 export const REPO_URL = 'https://github.com/mssio/pyrgus-web'
 export const EFF_WORDLIST_URL = 'https://www.eff.org/dice'
 

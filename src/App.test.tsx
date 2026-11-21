@@ -2,8 +2,11 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
+import pkg from '../package.json'
 import App from './App'
-import { EFF_WORDLIST_URL, REPO_URL } from './config'
+import { APP_VERSION, EFF_WORDLIST_URL, REPO_URL } from './config'
+import PrivacyPage from './PrivacyPage'
+import SupportPage from './SupportPage'
 
 const PILL = 'Pyrgus for iPhone, iPad & Mac — coming soon'
 const TITLE = 'Pyrgus is coming to iPhone, iPad & Mac'
@@ -40,6 +43,25 @@ describe('App', () => {
   it('links the support page from the footer', () => {
     render(<App />)
     expect(screen.getByRole('link', { name: 'Support' })).toHaveAttribute('href', '/support')
+  })
+
+  it('renders the app icon image in the header and the build version in the footer', () => {
+    render(<App />)
+    const home = screen.getByRole('banner').querySelector('a[href="/"]')
+    const icon = home?.querySelector('img')
+    expect(icon).not.toBeNull()
+    expect(icon).toHaveAttribute('alt', '')
+    expect(icon).toHaveAttribute('aria-hidden', 'true')
+    expect(APP_VERSION).toBe(pkg.version)
+    expect(screen.getByRole('contentinfo')).toHaveTextContent(`Pyrgus ${pkg.version}`)
+  })
+
+  it('shows the version in the footer on PrivacyPage and SupportPage', () => {
+    const { unmount } = render(<PrivacyPage />)
+    expect(screen.getByRole('contentinfo')).toHaveTextContent(`Pyrgus ${pkg.version}`)
+    unmount()
+    render(<SupportPage />)
+    expect(screen.getByRole('contentinfo')).toHaveTextContent(`Pyrgus ${pkg.version}`)
   })
 
   it('opens the apps dialog from the pill and closes it with Escape, returning focus to the pill', async () => {
