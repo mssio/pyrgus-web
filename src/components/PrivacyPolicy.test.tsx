@@ -8,7 +8,7 @@ describe('PrivacyPolicy', () => {
     render(<PrivacyPolicy />)
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
     expect(screen.getByRole('heading', { level: 1, name: 'Privacy Policy' })).toBeInTheDocument()
-    expect(screen.getByText('Effective 28 September 2026')).toBeInTheDocument()
+    expect(screen.getByText('Effective 20 November 2026')).toBeInTheDocument()
   })
 
   it('has a section per platform plus Contacting us, Children, Changes and Contact', () => {
@@ -67,5 +67,22 @@ describe('PrivacyPolicy', () => {
     expect(
       screen.getByText(/Pyrgus collects no personal information from anyone, including children\./),
     ).toBeInTheDocument()
+  })
+
+  it('accurately describes saved options on web, links out, and current widget storage', () => {
+    render(<PrivacyPolicy />)
+    expect(
+      screen.getByText(
+        /your chosen format and its options in local storage \(PIN length, Custom Password length and symbols, and Memorable word count and separator\)\. Generated passwords are never stored\./,
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Other options reset when you reload/)).not.toBeInTheDocument()
+    expect(
+      screen.getByText(/the App Store, EFF wordlist and source code links lead to other sites/),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Each Home Screen widget keeps its own format and option settings\./),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/timestamp of your last copy/)).not.toBeInTheDocument()
   })
 })
