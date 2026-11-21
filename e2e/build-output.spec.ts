@@ -10,10 +10,11 @@ const files = (dir: string) =>
     .filter((d) => d.isFile())
     .map((d) => join(d.parentPath, d.name))
 
-test('every page is built', () => {
-  for (const entry of ['index.html', 'privacy.html', 'support.html']) {
+test('every page and static icon asset is built', () => {
+  for (const entry of ['index.html', 'privacy.html', 'support.html', 'favicon.png', 'apple-touch-icon.png', 'og.png']) {
     expect(existsSync(join(DIST, entry)), entry).toBe(true)
   }
+  expect(existsSync(join(DIST, 'favicon.svg'))).toBe(false)
 })
 
 test('no built HTML file has an inline script or a style attribute', () => {
@@ -48,7 +49,8 @@ test('no built file references a data: URI', () => {
   const scanned = files(DIST).filter((f) => !BINARY_EXTENSIONS.test(f))
   // Guard against the check passing vacuously if the build output ever stops matching this shape.
   expect(scanned.length).toBeGreaterThan(0)
-  expect(scanned.some((f) => f.endsWith('.svg'))).toBe(true)
+  expect(scanned.some((f) => f.endsWith('.html'))).toBe(true)
+  expect(scanned.some((f) => f.endsWith('.css'))).toBe(true)
   expect(scanned.some((f) => f.endsWith('.js'))).toBe(true)
 
   for (const file of scanned) {

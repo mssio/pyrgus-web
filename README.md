@@ -14,9 +14,10 @@ Every claim below points at the code or config that makes it true.
 - **The page cannot make network requests.** `connect-src 'none'` in [`vercel.json`](vercel.json),
   alongside a strict CSP with Trusted Types.
 - **No analytics, no third-party scripts, no CDN fonts.**
-- **Nothing stored but your format preference.** Only `pyrgus.format` and `pyrgus.pinLength` go to
-  `localStorage`; see [`src/lib/preferences.ts`](src/lib/preferences.ts). Custom Password and
-  Memorable options last only for the page session and reset on reload.
+- **Nothing stored but your format preferences.** Only the six `pyrgus.*` preference keys (format,
+  PIN length, Custom Password length and symbols, and Memorable word count and separator) go to
+  `localStorage`; see [`src/lib/preferences.ts`](src/lib/preferences.ts). Generated passwords are
+  never stored.
 
 Read the full [privacy policy](https://p.mss.io/privacy), which covers the website and the app. Need
 help? Use the [support page](https://p.mss.io/support) or email support@e.mss.io.
@@ -86,7 +87,7 @@ and the `/generate` → `/` redirect live in [`vercel.json`](vercel.json).
 
 ## Pyrgus for iPhone, iPad & Mac
 
-Coming soon.
+Available on the [App Store](https://apps.apple.com/app/pyrgus-password-generator/id6816824499).
 
 ## Credits and licences
 

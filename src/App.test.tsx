@@ -84,9 +84,14 @@ describe('App', () => {
     expect(within(dialog).getByText('On-device. No account, no net.')).toBeInTheDocument()
     for (const title of FEATURE_TITLES) expect(within(dialog).getByText(title)).toBeInTheDocument()
     expect(
-      within(dialog).getByText('Tap from the Home Screen to open Pyrgus and copy immediately. The widget shows only a mask.'),
+      within(dialog).getByText(
+        'Tap from the Home Screen to open Pyrgus and copy immediately. The widget shows only a mask.',
+      ),
     ).toBeInTheDocument()
-    expect(within(dialog).getByRole('link', { name: 'Download on the App Store' })).toHaveAttribute('href', APP_STORE_URL)
+    expect(within(dialog).getByRole('link', { name: 'Download on the App Store' })).toHaveAttribute(
+      'href',
+      APP_STORE_URL,
+    )
     // The widget illustration is decorative and mirrors the v1.0.2 widget (no fake Copied on Home Screen).
     const widget = within(dialog).getByText('Copy in Pyrgus').closest('[aria-hidden="true"]')
     expect(widget).not.toBeNull()

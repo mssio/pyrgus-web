@@ -80,9 +80,7 @@ describe('PrivacyPolicy', () => {
     expect(
       screen.getByText(/the App Store, EFF wordlist and source code links lead to other sites/),
     ).toBeInTheDocument()
-    expect(
-      screen.getByText(/Each Home Screen widget keeps its own format and option settings\./),
-    ).toBeInTheDocument()
+    expect(screen.getByText(/Each Home Screen widget keeps its own format and option settings\./)).toBeInTheDocument()
     expect(screen.queryByText(/timestamp of your last copy/)).not.toBeInTheDocument()
   })
 })
