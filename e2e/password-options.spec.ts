@@ -79,7 +79,7 @@ test('custom controls support keyboard boundaries and exact copying', async ({ p
   expect(withSymbols).toMatch(/[!@#$%^&*\-_=+?]/)
 
   await page.getByRole('button', { name: 'Copy', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Copied ✓' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible()
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(withSymbols)
 })
 
@@ -125,13 +125,13 @@ test('memorable controls support every separator and preserve focus', async ({ p
 
   const spaced = await secretText(page)
   await page.getByRole('button', { name: 'Copy', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Copied ✓' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible()
   const copied = await page.evaluate(() => navigator.clipboard.readText())
   expect(copied).toBe(spaced)
   expect(copied).toMatch(/ \d{3}$/)
 })
 
-test('saved format survives reload while options reset', async ({ page }) => {
+test('saved format and options survive reload', async ({ page }) => {
   await page.goto('/')
   await chooseFormat(page, 'Custom Password')
   await lengthSlider(page).focus()
@@ -151,24 +151,33 @@ test('saved format survives reload while options reset', async ({ page }) => {
   await chooseFormat(page, 'Custom Password')
   await page.reload()
   await expect(page.getByRole('button', { name: 'Format: Custom Password' })).toBeVisible()
-  await expect(lengthSlider(page)).toHaveValue('24')
-  await expect(symbolsSwitch(page)).toBeChecked()
-  await expect(page.getByTestId('secret')).toHaveText(/^.{24}$/)
+  await expect(lengthSlider(page)).toHaveValue('6')
+  await expect(symbolsSwitch(page)).not.toBeChecked()
+  await expect(page.getByTestId('secret')).toHaveText(/^[A-Za-z0-9]{6}$/)
+  await expect(page.getByText('~35 bits of entropy')).toBeVisible()
 
   await chooseFormat(page, 'Memorable')
-  await wordsSlider(page).focus()
-  await wordsSlider(page).press('End')
   await radio(page, 'Space').click()
   await page.reload()
   await expect(page.getByRole('button', { name: 'Format: Memorable' })).toBeVisible()
-  await expect(wordsSlider(page)).toHaveValue('6')
-  await expect(radio(page, 'Hyphen (-)')).toBeChecked()
-  await expect(page.getByText('87.5 bits of entropy')).toBeVisible()
+  await expect(wordsSlider(page)).toHaveValue('8')
+  await expect(radio(page, 'Space')).toBeChecked()
+  await expect(page.getByText('113.4 bits of entropy')).toBeVisible()
 
   await chooseFormat(page, 'PIN')
   await page.getByRole('radio', { name: '8 digits' }).click()
-  const keys = await page.evaluate(() => Object.keys(localStorage).sort())
-  expect(keys).toEqual(['pyrgus.format', 'pyrgus.pinLength'])
+  const currentSecret = await secretText(page)
+  const stored = await page.evaluate(() => Object.entries(localStorage))
+  const keys = stored.map(([k]) => k).sort()
+  expect(keys).toEqual([
+    'pyrgus.customLength',
+    'pyrgus.format',
+    'pyrgus.includeSymbols',
+    'pyrgus.memorableSeparator',
+    'pyrgus.memorableWordCount',
+    'pyrgus.pinLength',
+  ])
+  for (const [, value] of stored) expect(value).not.toBe(currentSecret)
 })
 
 /** Index of the first longest EFF entry: every scripted draw selects it. */
@@ -207,7 +216,7 @@ test('long memorable results and controls fit 320 by 640', async ({ page, contex
     }
     const shown = await secretText(page)
     await copy.click()
-    await expect(page.getByRole('button', { name: 'Copied ✓' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible()
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(shown)
   }
 

@@ -6,7 +6,7 @@ export function Header() {
   return (
     <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-6 sm:px-6">
       <a href="/" className="flex items-center gap-2 text-zinc-950 dark:text-white">
-        <Logo className="size-8" />
+        <Logo className="size-8 rounded-lg" />
         <span className="text-lg font-semibold tracking-tight">Pyrgus</span>
       </a>
       <a

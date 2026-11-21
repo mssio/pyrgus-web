@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { APP_STORE_URL } from '../config'
 import { Badge } from './catalyst/badge'
 import { Button } from './catalyst/button'
 import { Dialog, DialogActions, DialogBody, DialogDescription, DialogTitle } from './catalyst/dialog'
+import { Logo } from './Logo'
 import { WidgetMockup } from './WidgetMockup'
 
 const FEATURES = [
@@ -11,16 +13,16 @@ const FEATURES = [
   },
   {
     title: 'A widget that never shows your secret',
-    body: 'Tap to copy from the Home Screen. The widget shows only a mask and “Copied”.',
+    body: 'Tap from the Home Screen to open Pyrgus and copy immediately. The widget shows only a mask.',
   },
   { title: 'The clipboard clears itself', body: 'Copied secrets are cleared from the clipboard after 90 seconds.' },
   {
     title: 'Six formats',
-    body: 'Passwords, memorable phrases, PINs, and 128- and 256-bit hex secrets.',
+    body: 'Passwords, custom passwords, memorable phrases, PINs, and 128- and 256-bit hex secrets.',
   },
 ]
 
-/** The "coming soon" pill and the dialog it opens. Nothing about the apps renders in the page flow. */
+/** The native-apps pill and the dialog it opens. Nothing about the apps renders in the page flow. */
 export function AppsDialog() {
   const [open, setOpen] = useState(false)
 
@@ -30,9 +32,10 @@ export function AppsDialog() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex rounded-full px-4 py-1.5 text-sm/6 font-medium text-indigo-700 ring-1 ring-indigo-600/20 hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:text-indigo-300 dark:ring-indigo-400/30 dark:hover:bg-indigo-500/10 dark:focus-visible:outline-indigo-400"
+          className="inline-flex items-center gap-2 rounded-full py-1.5 pr-4 pl-2 text-sm/6 font-medium text-indigo-700 ring-1 ring-indigo-600/20 hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:text-indigo-300 dark:ring-indigo-400/30 dark:hover:bg-indigo-500/10 dark:focus-visible:outline-indigo-400"
         >
-          Pyrgus for iPhone, iPad &amp; Mac — coming soon
+          <Logo className="size-5 rounded-[5px]" />
+          Pyrgus for iPhone, iPad &amp; Mac
         </button>
       </div>
 
@@ -45,11 +48,14 @@ export function AppsDialog() {
         // scrolls the whole dialog — the page behind stays scroll-locked either way.
         className="[@media(min-height:32rem)]:flex [@media(min-height:32rem)]:max-h-[calc(100dvh-1.5rem)] [@media(min-height:32rem)]:flex-col [@media(min-height:32rem)]:sm:max-h-[calc(100dvh-2rem)]"
       >
-        <Badge color="indigo" className="shrink-0 self-start">
-          Coming soon · iPhone · iPad · Mac
-        </Badge>
-        <DialogTitle className="mt-4 shrink-0">Pyrgus is coming to iPhone, iPad &amp; Mac</DialogTitle>
-        <DialogDescription className="shrink-0">On-device. No account, no net.</DialogDescription>
+        <div className="flex shrink-0 items-center gap-4">
+          <Logo className="size-14 rounded-xl shadow-sm sm:size-16 sm:rounded-2xl" />
+          <div className="min-w-0">
+            <Badge color="indigo">Available now · iPhone · iPad · Mac</Badge>
+            <DialogTitle className="mt-2">Pyrgus for iPhone, iPad &amp; Mac</DialogTitle>
+            <DialogDescription>On-device. No account, no net.</DialogDescription>
+          </div>
+        </div>
         <DialogBody className="min-h-0 overflow-y-auto">
           <div className="flex justify-center">
             <WidgetMockup />
@@ -66,6 +72,9 @@ export function AppsDialog() {
         <DialogActions className="shrink-0">
           <Button plain onClick={() => setOpen(false)}>
             Close
+          </Button>
+          <Button color="indigo" href={APP_STORE_URL}>
+            Download on the App Store
           </Button>
         </DialogActions>
       </Dialog>

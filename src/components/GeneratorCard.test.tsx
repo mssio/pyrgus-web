@@ -34,10 +34,12 @@ afterEach(() => {
 })
 
 describe('GeneratorCard', () => {
-  it('shows a Password and its entropy on load', () => {
+  it('shows a Password, visible Format label, centered secret and entropy on load', () => {
     setup()
     expect(secret()).toMatch(/^[^-]{6}-[^-]{6}-[^-]{6}$/)
+    expect(screen.getByTestId('secret')).toHaveClass('text-center')
     expect(screen.getByText('90.1 bits of entropy')).toBeInTheDocument()
+    expect(screen.getByText('Format')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Format: Password' })).toBeInTheDocument()
   })
 
@@ -76,12 +78,19 @@ describe('GeneratorCard', () => {
     expect(secret()).not.toBe(before)
   })
 
-  it('copies the displayed value and confirms', async () => {
+  it('copies the displayed value and confirms with decorative action icons', async () => {
     const user = setup()
     const shown = secret()
-    await user.click(screen.getByRole('button', { name: 'Copy' }))
+    const copyButton = screen.getByRole('button', { name: 'Copy' })
+    const regenButton = screen.getByRole('button', { name: 'Regenerate' })
+    expect(copyButton.querySelector('svg[data-slot="icon"][aria-hidden="true"]')).not.toBeNull()
+    expect(regenButton.querySelector('svg[data-slot="icon"][aria-hidden="true"]')).not.toBeNull()
+
+    await user.click(copyButton)
     expect(writeText).toHaveBeenCalledWith(shown)
-    expect(screen.getByRole('button', { name: 'Copied ✓' })).toBeInTheDocument()
+    const copiedButton = screen.getByRole('button', { name: 'Copied' })
+    expect(copiedButton).toBeInTheDocument()
+    expect(copiedButton.querySelector('svg[data-slot="icon"][aria-hidden="true"]')).not.toBeNull()
     expect(screen.getByRole('status')).toHaveTextContent('Copied')
   })
 
@@ -95,7 +104,7 @@ describe('GeneratorCard', () => {
     const user = setup()
     writeText.mockRejectedValueOnce(new DOMException('denied', 'NotAllowedError'))
     await user.click(screen.getByRole('button', { name: 'Copy' }))
-    expect(screen.queryByRole('button', { name: 'Copied ✓' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Copied' })).not.toBeInTheDocument()
     expect(screen.getByText("Couldn't copy. Select the password and copy it manually.")).toBeInTheDocument()
   })
 

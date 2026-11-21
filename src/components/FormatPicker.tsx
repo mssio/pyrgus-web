@@ -17,7 +17,7 @@ export function FormatPicker({ value, onChange }: { value: FormatId; onChange: (
         {FORMAT_LABELS[value]}
         <ChevronDownIcon />
       </DropdownButton>
-      <DropdownMenu anchor="bottom start">
+      <DropdownMenu anchor="bottom end">
         {FORMAT_GROUPS.map((group) => (
           <DropdownSection key={group.heading} aria-label={group.heading}>
             <DropdownHeading>{group.heading}</DropdownHeading>

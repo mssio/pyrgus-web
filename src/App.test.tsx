@@ -2,11 +2,14 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
+import pkg from '../package.json'
 import App from './App'
-import { EFF_WORDLIST_URL, REPO_URL } from './config'
+import { APP_STORE_URL, APP_VERSION, EFF_WORDLIST_URL, REPO_URL } from './config'
+import PrivacyPage from './PrivacyPage'
+import SupportPage from './SupportPage'
 
-const PILL = 'Pyrgus for iPhone, iPad & Mac — coming soon'
-const TITLE = 'Pyrgus is coming to iPhone, iPad & Mac'
+const PILL = 'Pyrgus for iPhone, iPad & Mac'
+const TITLE = 'Pyrgus for iPhone, iPad & Mac'
 const FEATURE_TITLES = [
   'On-device',
   'A widget that never shows your secret',
@@ -21,9 +24,14 @@ describe('App', () => {
     render(<App />)
     expect(screen.getByTestId('secret')).toBeInTheDocument()
 
-    expect(screen.getByRole('button', { name: PILL })).toBeInTheDocument()
+    const pill = screen.getByRole('button', { name: PILL })
+    expect(pill).toBeInTheDocument()
+    const pillIcon = pill.querySelector('img')
+    expect(pillIcon).not.toBeNull()
+    expect(pillIcon).toHaveAttribute('alt', '')
+    expect(pillIcon).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.queryByText(TITLE)).not.toBeInTheDocument()
     expect(document.getElementById('apps')).toBeNull()
 
     expect(screen.getByRole('link', { name: 'Source code on GitHub' })).toHaveAttribute('href', REPO_URL)
@@ -42,6 +50,25 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: 'Support' })).toHaveAttribute('href', '/support')
   })
 
+  it('renders the app icon image in the header and the build version in the footer', () => {
+    render(<App />)
+    const home = screen.getByRole('banner').querySelector('a[href="/"]')
+    const icon = home?.querySelector('img')
+    expect(icon).not.toBeNull()
+    expect(icon).toHaveAttribute('alt', '')
+    expect(icon).toHaveAttribute('aria-hidden', 'true')
+    expect(APP_VERSION).toBe(pkg.version)
+    expect(screen.getByRole('contentinfo')).toHaveTextContent(`Pyrgus ${pkg.version}`)
+  })
+
+  it('shows the version in the footer on PrivacyPage and SupportPage', () => {
+    const { unmount } = render(<PrivacyPage />)
+    expect(screen.getByRole('contentinfo')).toHaveTextContent(`Pyrgus ${pkg.version}`)
+    unmount()
+    render(<SupportPage />)
+    expect(screen.getByRole('contentinfo')).toHaveTextContent(`Pyrgus ${pkg.version}`)
+  })
+
   it('opens the apps dialog from the pill and closes it with Escape, returning focus to the pill', async () => {
     const user = userEvent.setup()
     render(<App />)
@@ -49,12 +76,28 @@ describe('App', () => {
 
     await user.click(pill)
     const dialog = await screen.findByRole('dialog', { name: TITLE })
-    expect(within(dialog).getByText('Coming soon · iPhone · iPad · Mac')).toBeInTheDocument()
+    const dialogIcon = dialog.querySelector('img')
+    expect(dialogIcon).not.toBeNull()
+    expect(dialogIcon).toHaveAttribute('alt', '')
+    expect(dialogIcon).toHaveAttribute('aria-hidden', 'true')
+    expect(within(dialog).getByText('Available now · iPhone · iPad · Mac')).toBeInTheDocument()
     expect(within(dialog).getByText('On-device. No account, no net.')).toBeInTheDocument()
     for (const title of FEATURE_TITLES) expect(within(dialog).getByText(title)).toBeInTheDocument()
-    // The widget illustration is decorative and never shows a secret.
-    expect(within(dialog).getByText('Copied ✓').closest('[aria-hidden="true"]')).not.toBeNull()
-    expect(within(dialog).getByText('••••••-••••••-••••••')).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(
+        'Tap from the Home Screen to open Pyrgus and copy immediately. The widget shows only a mask.',
+      ),
+    ).toBeInTheDocument()
+    expect(within(dialog).getByRole('link', { name: 'Download on the App Store' })).toHaveAttribute(
+      'href',
+      APP_STORE_URL,
+    )
+    // The widget illustration is decorative and mirrors the v1.0.2 widget (no fake Copied on Home Screen).
+    const widget = within(dialog).getByText('Copy in Pyrgus').closest('[aria-hidden="true"]')
+    expect(widget).not.toBeNull()
+    expect(within(widget as HTMLElement).getByText('Password')).toBeInTheDocument()
+    expect(within(widget as HTMLElement).getByText('••••••-••••••-••••••')).toBeInTheDocument()
+    expect(within(dialog).queryByText('Copied ✓')).not.toBeInTheDocument()
 
     await user.keyboard('{Escape}')
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())

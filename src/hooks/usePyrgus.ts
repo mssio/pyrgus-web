@@ -1,16 +1,28 @@
 import { useEffect, useRef, useState } from 'react'
 import { formatEntropy } from '../core/entropy'
-import { DEFAULT_OPTIONS, type FormatId, type MemorableSeparator, type Options, type PinLength } from '../core/formats'
+import { type FormatId, type MemorableSeparator, type Options, type PinLength } from '../core/formats'
 import { generate } from '../core/generate'
 import { copySecret } from '../lib/clipboard'
-import { readFormat, readPinLength, writeFormat, writePinLength } from '../lib/preferences'
+import {
+  readCustomLength,
+  readFormat,
+  readIncludeSymbols,
+  readMemorableSeparator,
+  readMemorableWordCount,
+  readPinLength,
+  writeCustomLength,
+  writeFormat,
+  writeIncludeSymbols,
+  writeMemorableSeparator,
+  writeMemorableWordCount,
+  writePinLength,
+} from '../lib/preferences'
 
 export const COPIED_MS = 2000
 
 export type Pyrgus = {
   format: FormatId
   pinLength: PinLength
-  // Custom Password and Memorable options live in page state only: they reset on reload.
   customLength: number
   includeSymbols: boolean
   memorableWordCount: number
@@ -46,10 +58,10 @@ function tryGenerate(format: FormatId, options: Options): string | null {
 export function usePyrgus(): Pyrgus {
   const [format, setFormatState] = useState<FormatId>(readFormat)
   const [pinLength, setPinLengthState] = useState<PinLength>(readPinLength)
-  const [customLength, setCustomLengthState] = useState(DEFAULT_OPTIONS.customLength)
-  const [includeSymbols, setIncludeSymbolsState] = useState(DEFAULT_OPTIONS.includeSymbols)
-  const [memorableWordCount, setMemorableWordCountState] = useState(DEFAULT_OPTIONS.memorableWordCount)
-  const [memorableSeparator, setMemorableSeparatorState] = useState(DEFAULT_OPTIONS.memorableSeparator)
+  const [customLength, setCustomLengthState] = useState(readCustomLength)
+  const [includeSymbols, setIncludeSymbolsState] = useState(readIncludeSymbols)
+  const [memorableWordCount, setMemorableWordCountState] = useState(readMemorableWordCount)
+  const [memorableSeparator, setMemorableSeparatorState] = useState<MemorableSeparator>(readMemorableSeparator)
   const options: Options = { pinLength, customLength, includeSymbols, memorableWordCount, memorableSeparator }
   const [password, setPassword] = useState<string | null>(() => tryGenerate(format, options))
   // 0 = not copied; each successful copy bumps it, restarting the 2 s timer.
@@ -90,28 +102,32 @@ export function usePyrgus(): Pyrgus {
     next(format, { ...options, pinLength: n })
   }
 
-  // The option setters ignore a no-op event, so it neither regenerates nor re-announces.
+  // The option setters ignore a no-op event, so it neither writes, regenerates nor re-announces.
   function setCustomLength(n: number) {
     if (n === customLength) return
     setCustomLengthState(n)
+    writeCustomLength(n)
     next(format, { ...options, customLength: n })
   }
 
   function setIncludeSymbols(value: boolean) {
     if (value === includeSymbols) return
     setIncludeSymbolsState(value)
+    writeIncludeSymbols(value)
     next(format, { ...options, includeSymbols: value })
   }
 
   function setMemorableWordCount(n: number) {
     if (n === memorableWordCount) return
     setMemorableWordCountState(n)
+    writeMemorableWordCount(n)
     next(format, { ...options, memorableWordCount: n })
   }
 
   function setMemorableSeparator(value: MemorableSeparator) {
     if (value === memorableSeparator) return
     setMemorableSeparatorState(value)
+    writeMemorableSeparator(value)
     next(format, { ...options, memorableSeparator: value })
   }
 

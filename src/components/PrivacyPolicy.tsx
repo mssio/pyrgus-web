@@ -41,8 +41,9 @@ export function PrivacyPolicy() {
             anywhere.
           </li>
           <li>
-            <Strong>What your browser stores:</Strong> two preferences in local storage, your chosen format and PIN
-            length. Other options reset when you reload. Clearing this site's data in your browser removes them.
+            <Strong>What your browser stores:</Strong> your chosen format and its options in local storage (PIN length,
+            Custom Password length and symbols, and Memorable word count and separator). Generated passwords are never
+            stored. Clearing this site's data in your browser removes them.
           </li>
           <li>
             <Strong>Clipboard:</Strong> when you copy a password, the page checks after 90 seconds whether the clipboard
@@ -56,8 +57,8 @@ export function PrivacyPolicy() {
             no analytics, cookies or third-party scripts, and all fonts and images come from p.mss.io itself.
           </li>
           <li>
-            <Strong>Links out:</Strong> the EFF wordlist and source code links lead to other sites, which have their own
-            policies.
+            <Strong>Links out:</Strong> the App Store, EFF wordlist and source code links lead to other sites, which
+            have their own policies.
           </li>
         </List>
       </Section>
@@ -69,9 +70,9 @@ export function PrivacyPolicy() {
             makes no network connections and has no account.
           </li>
           <li>
-            <Strong>What the app stores, on your device only:</Strong> your chosen format and its options. The Home
-            Screen widget keeps its own settings and a timestamp of your last copy, so it can show "Copied" for 90
-            seconds. Generated passwords are never stored. Deleting the app removes all of this.
+            <Strong>What the app stores, on your device only:</Strong> your chosen format and its options. Each Home
+            Screen widget keeps its own format and option settings. Generated passwords are never stored. Deleting the
+            app removes all of this.
           </li>
           <li>
             <Strong>Clipboard:</Strong> a copied password expires from the clipboard after 90 seconds. On iPhone and
