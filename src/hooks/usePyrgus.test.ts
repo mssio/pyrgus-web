@@ -6,7 +6,14 @@ import { DEFAULT_OPTIONS, type FormatId, type Options } from '../core/formats'
 import { generate } from '../core/generate'
 import { InsecureRandomError } from '../core/random'
 import { CLEAR_AFTER_MS, cancelPendingClear } from '../lib/clipboard'
-import { FORMAT_KEY, PIN_LENGTH_KEY } from '../lib/preferences'
+import {
+  CUSTOM_LENGTH_KEY,
+  FORMAT_KEY,
+  INCLUDE_SYMBOLS_KEY,
+  MEMORABLE_SEPARATOR_KEY,
+  MEMORABLE_WORD_COUNT_KEY,
+  PIN_LENGTH_KEY,
+} from '../lib/preferences'
 import { COPIED_MS, usePyrgus, type Pyrgus } from './usePyrgus'
 
 // A pass-through spy: real generation, with call arguments recorded and one-off failures injectable.
@@ -213,7 +220,7 @@ describe('usePyrgus', () => {
     })
   })
 
-  it('keeps Memorable settings across switches but resets them on remount', () => {
+  it('keeps Custom Password and Memorable settings across switches and remounts', () => {
     const first = renderHook(() => usePyrgus())
     const { result } = first
     act(() => result.current.setFormat('memorable'))
@@ -233,19 +240,40 @@ describe('usePyrgus', () => {
     const second = renderHook(() => usePyrgus())
     expect(second.result.current).toMatchObject({
       format: 'memorable',
-      memorableWordCount: 6,
-      memorableSeparator: '-',
-      entropy: '87.5',
-      customLength: 24,
-      includeSymbols: true,
+      memorableWordCount: 8,
+      memorableSeparator: ' ',
+      entropy: '113.4',
+      customLength: 6,
+      includeSymbols: false,
     })
+    expect(second.result.current.password).toMatch(/^(?:[A-Z][a-z-]* ){8}\d{3}$/)
   })
 
-  it('restores a saved Custom Password with default options', () => {
+  it('restores a saved Custom Password with default options when no option keys are stored', () => {
     localStorage.setItem(FORMAT_KEY, 'strong')
     const { result } = renderHook(() => usePyrgus())
     expect(result.current).toMatchObject({ format: 'strong', customLength: 24, includeSymbols: true, entropy: '~149' })
     expect(result.current.password).toHaveLength(24)
+  })
+
+  it('mounts cleanly with defaults when all stored preference values are corrupted', () => {
+    localStorage.setItem(FORMAT_KEY, 'invalid')
+    localStorage.setItem(PIN_LENGTH_KEY, '99')
+    localStorage.setItem(CUSTOM_LENGTH_KEY, '06')
+    localStorage.setItem(INCLUDE_SYMBOLS_KEY, 'yes')
+    localStorage.setItem(MEMORABLE_WORD_COUNT_KEY, '9')
+    localStorage.setItem(MEMORABLE_SEPARATOR_KEY, '  ')
+    const { result } = renderHook(() => usePyrgus())
+    expect(result.current).toMatchObject({
+      format: 'standard',
+      pinLength: 6,
+      customLength: 24,
+      includeSymbols: true,
+      memorableWordCount: 6,
+      memorableSeparator: '-',
+      error: false,
+    })
+    expect(result.current.password).toMatch(/^[^-]{6}-[^-]{6}-[^-]{6}$/)
   })
 })
 
@@ -289,30 +317,53 @@ describe('usePyrgus — option setters', () => {
     }
   })
 
-  it.each(SETTERS)('%s with the current value does nothing', (setter, format, field) => {
+  it.each(SETTERS)('%s with the current value does nothing and skips storage writes', (setter, format, field) => {
     const { result } = renderHook(() => usePyrgus())
     act(() => result.current.setFormat(format))
+    const setItem = vi.spyOn(Storage.prototype, 'setItem')
     const before = { password: result.current.password, id: result.current.announcementId }
     generateSpy.mockClear()
     act(() => call(result.current, setter, DEFAULT_OPTIONS[field]))
     expect(result.current.password).toBe(before.password)
     expect(result.current.announcementId).toBe(before.id)
     expect(generateSpy).not.toHaveBeenCalled()
+    expect(setItem).not.toHaveBeenCalled()
   })
 
-  it('writes only the format and PIN length to storage', () => {
+  it('writes all six preference keys to storage and never stores a password', () => {
     const setItem = vi.spyOn(Storage.prototype, 'setItem')
     const { result } = renderHook(() => usePyrgus())
+    const seenPasswords: string[] = []
+    if (result.current.password) seenPasswords.push(result.current.password)
     for (const [setter, format, , value] of SETTERS) {
       act(() => result.current.setFormat(format))
+      if (result.current.password) seenPasswords.push(result.current.password)
       act(() => call(result.current, setter, value))
+      if (result.current.password) seenPasswords.push(result.current.password)
     }
     act(() => result.current.setFormat('pin'))
     act(() => result.current.setPinLength(4))
-    expect(new Set(setItem.mock.calls.map(([key]) => key))).toEqual(new Set([FORMAT_KEY, PIN_LENGTH_KEY]))
-    expect(Object.keys(localStorage).sort()).toEqual([FORMAT_KEY, PIN_LENGTH_KEY].sort())
+    if (result.current.password) seenPasswords.push(result.current.password)
+
+    const expectedKeys = [
+      FORMAT_KEY,
+      PIN_LENGTH_KEY,
+      CUSTOM_LENGTH_KEY,
+      INCLUDE_SYMBOLS_KEY,
+      MEMORABLE_WORD_COUNT_KEY,
+      MEMORABLE_SEPARATOR_KEY,
+    ].sort()
+    expect(new Set(setItem.mock.calls.map(([key]) => key))).toEqual(new Set(expectedKeys))
+    expect(Object.keys(localStorage).sort()).toEqual(expectedKeys)
     expect(localStorage.getItem(FORMAT_KEY)).toBe('pin')
     expect(localStorage.getItem(PIN_LENGTH_KEY)).toBe('4')
+    expect(localStorage.getItem(CUSTOM_LENGTH_KEY)).toBe('6')
+    expect(localStorage.getItem(INCLUDE_SYMBOLS_KEY)).toBe('false')
+    expect(localStorage.getItem(MEMORABLE_WORD_COUNT_KEY)).toBe('8')
+    expect(localStorage.getItem(MEMORABLE_SEPARATOR_KEY)).toBe(' ')
+    for (const key of expectedKeys) {
+      expect(seenPasswords).not.toContain(localStorage.getItem(key))
+    }
   })
 
   it('still generates when storage throws', () => {

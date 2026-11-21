@@ -24,6 +24,27 @@ export function CheckIcon(props: IconProps) {
   )
 }
 
+export function CopyIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-slot="icon" {...props}>
+      <path d="M5.5 3.5A1.5 1.5 0 0 1 7 2h2.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 1 .439 1.061V9.5A1.5 1.5 0 0 1 12 11V8.621a3 3 0 0 0-.879-2.121L9 4.379A3 3 0 0 0 6.879 3.5H5.5Z" />
+      <path d="M4 5a1.5 1.5 0 0 0-1.5 1.5v6A1.5 1.5 0 0 0 4 14h5a1.5 1.5 0 0 0 1.5-1.5V8.621a1.5 1.5 0 0 0-.44-1.06L7.94 5.439A1.5 1.5 0 0 0 6.878 5H4Z" />
+    </svg>
+  )
+}
+
+export function RegenerateIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-slot="icon" {...props}>
+      <path
+        fillRule="evenodd"
+        d="M13.836 2.477a.75.75 0 0 1 .75.75v3.182a.75.75 0 0 1-.75.75h-3.182a.75.75 0 0 1 0-1.5h1.37l-.84-.841a4.5 4.5 0 0 0-7.08.932.75.75 0 0 1-1.3-.75 6 6 0 0 1 9.44-1.242l.842.84V3.227a.75.75 0 0 1 .75-.75Zm-.911 7.5A.75.75 0 0 1 13.199 11a6 6 0 0 1-9.44 1.241l-.84-.84v1.371a.75.75 0 0 1-1.5 0V9.591a.75.75 0 0 1 .75-.75H5.35a.75.75 0 0 1 0 1.5H3.98l.841.841a4.5 4.5 0 0 0 7.08-.932.75.75 0 0 1 1.025-.273Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  )
+}
+
 export function GitHubIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" {...props}>

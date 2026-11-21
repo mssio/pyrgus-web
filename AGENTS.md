@@ -59,8 +59,8 @@ branch from `develop` and merge back with no PR; releases and hotfixes end in a 
   `src/security-headers.test.ts` guards this.
 - No `dangerouslySetInnerHTML`, inline scripts, `style="…"` attributes in HTML, or `data:` URIs.
   _Trusted Types and the CSP block them in production._
-- Never persist, log or `console.*` a generated secret. Only `pyrgus.format` and `pyrgus.pinLength`
-  go to `localStorage`.
+- Never persist, log or `console.*` a generated secret. Only the six `pyrgus.*` preference keys go
+  to `localStorage`.
 - Fail closed: on a randomness error show the error state, never a fallback value.
 
 ## Dependencies

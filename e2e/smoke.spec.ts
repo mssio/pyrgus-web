@@ -38,7 +38,7 @@ test('generates and copies with zero CSP or Trusted Types violations', async ({ 
   await expect(secret).toHaveText(/^[0-9a-f]{64}$/)
 
   await page.getByRole('button', { name: 'Copy' }).click()
-  await expect(page.getByRole('button', { name: 'Copied ✓' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible()
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(await secret.textContent())
 
   expect(await violations(page)).toEqual([])
@@ -68,8 +68,30 @@ test('Secret 256 wraps without overflow or truncation at 320 px', async ({ page 
   expect(await violations(page)).toEqual([])
 })
 
-const APPS_PILL = 'Pyrgus for iPhone, iPad & Mac — coming soon'
-const APPS_TITLE = 'Pyrgus is coming to iPhone, iPad & Mac'
+test('at 320 px Custom Password controls and action buttons fit without overflowing', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 })
+  await page.goto('/')
+  await chooseFormat(page, 'Custom Password')
+
+  for (const button of [
+    page.getByRole('button', { name: 'Format: Custom Password' }),
+    page.getByRole('button', { name: 'Copy' }),
+    page.getByRole('button', { name: 'Regenerate' }),
+  ]) {
+    const metrics = await button.evaluate((el) => ({
+      scrollWidth: el.scrollWidth,
+      clientWidth: el.clientWidth,
+    }))
+    expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth)
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320)
+  expect(await violations(page)).toEqual([])
+})
+
+const APPS_PILL = 'Pyrgus for iPhone, iPad & Mac'
+const APPS_TITLE = 'Pyrgus for iPhone, iPad & Mac'
+const APP_STORE_URL = 'https://apps.apple.com/app/pyrgus-password-generator/id6816824499'
+const FINAL_FEATURE_BODY = 'Passwords, custom passwords, memorable phrases, PINs, and 128- and 256-bit hex secrets.'
 
 test('opens and closes the apps dialog with zero CSP or Trusted Types violations', async ({ page }) => {
   const errors: string[] = []
@@ -85,6 +107,7 @@ test('opens and closes the apps dialog with zero CSP or Trusted Types violations
   await expect(dialog).toBeAttached()
   await expect(dialog.getByRole('heading', { name: APPS_TITLE })).toBeVisible()
   await expect(dialog.getByText('The clipboard clears itself')).toBeVisible()
+  await expect(dialog.getByRole('link', { name: 'Download on the App Store' })).toHaveAttribute('href', APP_STORE_URL)
 
   await page.keyboard.press('Escape')
   await expect(dialog).not.toBeAttached()
@@ -94,7 +117,7 @@ test('opens and closes the apps dialog with zero CSP or Trusted Types violations
   expect(errors).toEqual([])
 })
 
-test('the apps dialog fits a 320 × 640 phone with a scrolling body and Close in view', async ({ page }) => {
+test('the apps dialog fits a 320 × 640 phone with a scrolling body and actions in view', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 640 })
   await page.goto('/')
   await page.getByRole('button', { name: APPS_PILL }).click()
@@ -102,12 +125,14 @@ test('the apps dialog fits a 320 × 640 phone with a scrolling body and Close in
   const dialog = page.getByRole('dialog', { name: APPS_TITLE })
   await expect(dialog).toBeAttached()
   await expect(dialog.getByRole('heading', { name: APPS_TITLE })).toBeVisible()
+  const download = dialog.getByRole('link', { name: 'Download on the App Store' })
   const close = dialog.getByRole('button', { name: 'Close' })
+  await expect(download).toBeInViewport({ ratio: 1 })
   await expect(close).toBeInViewport({ ratio: 1 })
 
-  // Only the body scrolls; the title and Close stay outside its scrolling area.
+  // Only the body scrolls; the title and actions stay outside its scrolling area.
   const body = dialog.locator('div.min-h-0.overflow-y-auto')
-  const finalFeature = dialog.getByText('Passwords, memorable phrases, PINs, and 128- and 256-bit hex secrets.')
+  const finalFeature = dialog.getByText(FINAL_FEATURE_BODY)
   await expect(finalFeature).not.toBeInViewport()
   const pageScroll = await page.evaluate(() => window.scrollY)
   await expect(page.locator('html')).toHaveCSS('overflow', 'hidden')
@@ -115,6 +140,7 @@ test('the apps dialog fits a 320 × 640 phone with a scrolling body and Close in
   await page.mouse.wheel(0, 1000)
   await expect(finalFeature).toBeInViewport({ ratio: 1 })
   await expect(dialog.getByText('Six formats')).toBeInViewport({ ratio: 1 })
+  await expect(download).toBeInViewport({ ratio: 1 })
   await expect(close).toBeInViewport({ ratio: 1 })
   expect(await body.evaluate((el) => el.scrollTop)).toBeGreaterThan(0)
   expect(await page.evaluate(() => window.scrollY)).toBe(pageScroll)
@@ -124,6 +150,7 @@ test('the apps dialog fits a 320 × 640 phone with a scrolling body and Close in
   await page.mouse.wheel(0, 1000)
   await expect(page.locator('html')).toHaveCSS('overflow', 'hidden')
   expect(await page.evaluate(() => window.scrollY)).toBe(pageScroll)
+  await expect(download).toBeInViewport({ ratio: 1 })
   await expect(close).toBeInViewport({ ratio: 1 })
   const docWidth = await page.evaluate(() => document.documentElement.scrollWidth)
   expect(docWidth).toBeLessThanOrEqual(320)
@@ -146,7 +173,7 @@ for (const { width, height } of [
     const pageScroll = await page.evaluate(() => window.scrollY)
 
     const finalFeatureTitle = dialog.getByText('Six formats', { exact: true })
-    const finalFeatureBody = dialog.getByText('Passwords, memorable phrases, PINs, and 128- and 256-bit hex secrets.')
+    const finalFeatureBody = dialog.getByText(FINAL_FEATURE_BODY)
     await finalFeatureBody.scrollIntoViewIfNeeded()
     await expect(finalFeatureTitle).toBeInViewport({ ratio: 1 })
     await expect(finalFeatureBody).toBeInViewport({ ratio: 1 })

@@ -6,6 +6,13 @@ import { ScriptedRandom } from '../../test-support/seeded-random'
 import { generate } from '../core/generate'
 import { WORDLIST } from '../core/wordlist'
 import { cancelPendingClear } from '../lib/clipboard'
+import {
+  CUSTOM_LENGTH_KEY,
+  FORMAT_KEY,
+  INCLUDE_SYMBOLS_KEY,
+  MEMORABLE_SEPARATOR_KEY,
+  MEMORABLE_WORD_COUNT_KEY,
+} from '../lib/preferences'
 import { GeneratorCard } from './GeneratorCard'
 
 // A pass-through spy, so a test can script one generation's randomness through the real generator.
@@ -206,9 +213,9 @@ describe('GeneratorCard — Custom Password and Memorable controls', () => {
     const user = setup()
     await chooseFormat(user, 'Custom Password')
     await user.click(screen.getByRole('button', { name: 'Copy' }))
-    expect(screen.getByRole('button', { name: 'Copied ✓' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument()
     fireEvent.change(lengthSlider(), { target: { value: '12' } })
-    expect(screen.queryByRole('button', { name: 'Copied ✓' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Copied' })).not.toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent('New password generated')
 
     writeText.mockRejectedValueOnce(new DOMException('denied', 'NotAllowedError'))
@@ -216,6 +223,27 @@ describe('GeneratorCard — Custom Password and Memorable controls', () => {
     expect(screen.getByText("Couldn't copy. Select the password and copy it manually.")).toBeInTheDocument()
     await user.click(symbolsSwitch())
     expect(screen.queryByText("Couldn't copy. Select the password and copy it manually.")).not.toBeInTheDocument()
+  })
+
+  it('restores saved Custom Password and Memorable options from localStorage on mount', () => {
+    localStorage.setItem(FORMAT_KEY, 'strong')
+    localStorage.setItem(CUSTOM_LENGTH_KEY, '10')
+    localStorage.setItem(INCLUDE_SYMBOLS_KEY, 'false')
+    const first = render(<GeneratorCard />)
+    expect(lengthSlider()).toHaveValue('10')
+    expect(symbolsSwitch()).not.toBeChecked()
+    expect(secret()).toMatch(/^[A-Za-z0-9]{10}$/)
+    expect(screen.getByText('~59 bits of entropy')).toBeInTheDocument()
+    first.unmount()
+
+    localStorage.setItem(FORMAT_KEY, 'memorable')
+    localStorage.setItem(MEMORABLE_WORD_COUNT_KEY, '8')
+    localStorage.setItem(MEMORABLE_SEPARATOR_KEY, ' ')
+    render(<GeneratorCard />)
+    expect(wordsSlider()).toHaveValue('8')
+    expect(radio('Space')).toBeChecked()
+    expect(secret()).toMatch(/^(?:[A-Z][a-z-]* ){8}\d{3}$/)
+    expect(screen.getByText('113.4 bits of entropy')).toBeInTheDocument()
   })
 
   it('a repeated same-value event neither regenerates nor re-announces', async () => {

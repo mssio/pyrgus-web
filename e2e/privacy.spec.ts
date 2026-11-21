@@ -1,4 +1,9 @@
+import { readFileSync } from 'node:fs'
 import { expect, test, type Browser, type Page } from '@playwright/test'
+
+const APP_VERSION = (
+  JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }
+).version
 
 type ViolationWindow = Window & { __violations: string[] }
 
@@ -51,7 +56,8 @@ test('/privacy serves the policy under the production headers with zero violatio
   expect(response?.headers()['content-security-policy']).toContain("require-trusted-types-for 'script'")
 
   await expect(heading(page)).toBeVisible()
-  await expect(page.getByText('Effective 28 September 2026')).toBeVisible()
+  await expect(page.getByText('Effective 20 November 2026')).toBeVisible()
+  await expect(page.getByRole('contentinfo')).toContainText(`Pyrgus ${APP_VERSION}`)
   await expect(page.getByRole('link', { name: 'privacy@e.mss.io' })).toHaveAttribute('href', 'mailto:privacy@e.mss.io')
   await expect(page).toHaveTitle('Privacy Policy · Pyrgus')
 

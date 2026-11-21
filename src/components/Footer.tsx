@@ -1,4 +1,4 @@
-import { EFF_WORDLIST_URL, REPO_URL } from '../config'
+import { APP_VERSION, EFF_WORDLIST_URL, REPO_URL } from '../config'
 import { TextLink } from './catalyst/text'
 
 export function Footer() {
@@ -10,7 +10,7 @@ export function Footer() {
           Memorable passwords use the <TextLink href={EFF_WORDLIST_URL}>EFF long wordlist</TextLink> (CC BY 3.0 US).
         </p>
         <p>
-          © 2026 mss.io · <TextLink href={REPO_URL}>Source code</TextLink> ·{' '}
+          Pyrgus {APP_VERSION} · © 2026 mss.io · <TextLink href={REPO_URL}>Source code</TextLink> ·{' '}
           <TextLink href="/privacy">Privacy</TextLink> · <TextLink href="/support">Support</TextLink>
         </p>
       </div>
